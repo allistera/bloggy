@@ -9,17 +9,19 @@ interface Props {
   noindex?: boolean;
 }
 
+const site = Astro.site ?? new URL('https://allisterantosik.com');
+
 const {
   title,
   description = 'Lead SRE & AIOps Engineer Portfolio and Blog — automation, reliability, and high-performance systems.',
-  image = '/logo.png',
+  // Wide social card for OG/Twitter; override per-page when needed
+  image = '/og-default.png',
   noindex = false,
 } = Astro.props;
 
-const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://allisterantosik.com').href;
-const ogImage = image.startsWith('http')
-  ? image
-  : new URL(image, Astro.site ?? 'https://allisterantosik.com').href;
+const canonical = new URL(Astro.url.pathname, site).href;
+const ogImage = image.startsWith('http') ? image : new URL(image, site).href;
+const isDefaultOg = image === '/og-default.png' || image.endsWith('/og-default.png');
 ---
 
 <!doctype html>
@@ -27,6 +29,10 @@ const ogImage = image.startsWith('http')
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#09090b" />
+    <meta name="msapplication-TileColor" content="#09090b" />
+    <meta name="msapplication-TileImage" content="/icon-192.png" />
+
     <SEO
       title={title}
       description={description}
@@ -43,24 +49,42 @@ const ogImage = image.startsWith('http')
           description,
           siteName: 'Allister Antosik',
         },
+        image: {
+          url: ogImage,
+          secureUrl: ogImage,
+          type: 'image/png',
+          width: isDefaultOg ? 1200 : 512,
+          height: isDefaultOg ? 630 : 512,
+          alt: 'Allister Antosik — Lead SRE & AIOps Engineer',
+        },
       }}
       twitter={{
         card: 'summary_large_image',
         title,
         description,
         image: ogImage,
+        imageAlt: 'Allister Antosik — Lead SRE & AIOps Engineer',
       }}
       extend={{
         link: [
           { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+          { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16.png' },
           { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
-          { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+          { rel: 'icon', type: 'image/png', sizes: '48x48', href: '/favicon-48.png' },
+          { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
+          { rel: 'manifest', href: '/site.webmanifest' },
         ],
       }}
     />
+
+    <!-- Explicit icon links (broader browser coverage) -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
     <meta name="htmx-config" content='{"timeout": 3000}' />
     <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
   </head>
