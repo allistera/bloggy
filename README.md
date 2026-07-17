@@ -45,6 +45,13 @@ Error monitoring via [`@sentry/astro`](https://docs.sentry.io/platforms/javascri
 
 Config files: `sentry.client.config.ts`, `sentry.server.config.ts`, and the `sentry()` integration in `astro.config.mjs`.
 
+**Logs & metrics** are enabled (`enableLogs` / `enableMetrics`):
+
+- Console calls are forwarded via `consoleLoggingIntegration`
+- Page views, HTMX requests, and carousel navigation emit `Sentry.logger` + `Sentry.metrics`
+- Node runtime metrics on the server (`nodeRuntimeMetricsIntegration`)
+- App helpers live in `src/lib/telemetry.ts`
+
 ## Test
 
 ```bash
