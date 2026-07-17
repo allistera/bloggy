@@ -181,27 +181,9 @@ import staticData from '../data/carousel.json';
       });
     }
 
-    // Load data
-    const loadData = async () => {
-      if (window.carouselData) {
-        data = window.carouselData;
-        initCarousel(data);
-      } else {
-        try {
-          const res = await fetch('/carousel.json');
-          if (res.ok) {
-            data = await res.json();
-            initCarousel(data);
-          } else {
-            throw new Error('Failed fetch');
-          }
-        } catch (e) {
-          data = staticData;
-          initCarousel(data);
-        }
-      }
-    };
-
-    loadData();
+    // Prefer test override (window.carouselData); otherwise use build-time JSON
+    // (avoids a 404 fetch for /carousel.json which is not a public URL).
+    data = window.carouselData || staticData;
+    initCarousel(data);
   });
 </script>
