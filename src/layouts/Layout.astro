@@ -1,11 +1,25 @@
 ---
+import { SEO } from 'astro-seo';
 import '../styles/global.css';
 
 interface Props {
   title: string;
+  description?: string;
+  image?: string;
+  noindex?: boolean;
 }
 
-const { title } = Astro.props;
+const {
+  title,
+  description = 'Lead SRE & AIOps Engineer Portfolio and Blog — automation, reliability, and high-performance systems.',
+  image = '/favicon.svg',
+  noindex = false,
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://allisterantosik.com').href;
+const ogImage = image.startsWith('http')
+  ? image
+  : new URL(image, Astro.site ?? 'https://allisterantosik.com').href;
 ---
 
 <!doctype html>
@@ -13,12 +27,33 @@ const { title } = Astro.props;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Lead SRE & AIOps Engineer Portfolio and Blog" />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content="Portfolio and Blog of a Lead SRE & AIOps Engineer" />
-    <meta property="og:type" content="website" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>{title}</title>
+    <SEO
+      title={title}
+      description={description}
+      canonical={canonical}
+      noindex={noindex}
+      openGraph={{
+        basic: {
+          title,
+          type: 'website',
+          image: ogImage,
+          url: canonical,
+        },
+        optional: {
+          description,
+          siteName: 'Allister Antosik',
+        },
+      }}
+      twitter={{
+        card: 'summary_large_image',
+        title,
+        description,
+        image: ogImage,
+      }}
+      extend={{
+        link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+      }}
+    />
     <meta name="htmx-config" content='{"timeout": 3000}' />
     <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
   </head>

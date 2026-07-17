@@ -143,7 +143,10 @@ test.describe('Feature 1: Portfolio Showcase Homepage (R1) - Tier 1 & Tier 2', (
 
     // Document description
     const descMeta = page.locator('meta[name="description"]');
-    await expect(descMeta).toHaveAttribute('content', 'Lead SRE & AIOps Engineer Portfolio and Blog');
+    await expect(descMeta).toHaveAttribute(
+      'content',
+      'Lead SRE & AIOps Engineer Portfolio and Blog — automation, reliability, and high-performance systems.',
+    );
 
     // OpenGraph
     const ogTitle = page.locator('meta[property="og:title"]');

@@ -55,7 +55,10 @@ test.describe('Milestone 1: Astro Project Initialization & Setup Verification', 
     
     // Description
     const descMeta = page.locator('meta[name="description"]');
-    await expect(descMeta).toHaveAttribute('content', 'Lead SRE & AIOps Engineer Portfolio and Blog');
+    await expect(descMeta).toHaveAttribute(
+      'content',
+      'Lead SRE & AIOps Engineer Portfolio and Blog — automation, reliability, and high-performance systems.',
+    );
     
     // OpenGraph
     const ogTitle = page.locator('meta[property="og:title"]');

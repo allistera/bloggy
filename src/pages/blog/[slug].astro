@@ -33,7 +33,10 @@ const words = (post.body ?? '').split(/\s+/).filter(Boolean).length;
 const readingTime = Math.max(1, Math.ceil(words / 200));
 ---
 
-<Layout title={`${post.data.title} - Allister Antosik`}>
+<Layout
+  title={`${post.data.title} - Allister Antosik`}
+  description={post.data.description}
+>
   <Header />
 
   <main class="py-12 flex-1 flex flex-col gap-6 w-full max-w-3xl mx-auto">
