@@ -122,13 +122,32 @@ import Carousel from '../components/Carousel.astro';
           }
         };
 
-        document.addEventListener('htmx:responseError', renderFallback);
-        document.addEventListener('htmx:sendError', renderFallback);
-        document.addEventListener('htmx:timeout', renderFallback);
+        let fallbackTimer;
+        const isProjectsRequest = (event) => event.detail?.elt?.id === 'projects-list';
+        const clearFallbackTimer = () => {
+          if (fallbackTimer) {
+            window.clearTimeout(fallbackTimer);
+            fallbackTimer = undefined;
+          }
+        };
+        const scheduleFallback = (event) => {
+          if (!isProjectsRequest(event)) return;
+          clearFallbackTimer();
+          fallbackTimer = window.setTimeout(renderFallback, 3100);
+        };
+        const showFallback = () => {
+          clearFallbackTimer();
+          renderFallback();
+        };
+
+        document.addEventListener('htmx:beforeRequest', scheduleFallback);
+        document.addEventListener('htmx:afterRequest', clearFallbackTimer);
+        document.addEventListener('htmx:responseError', showFallback);
+        document.addEventListener('htmx:sendError', showFallback);
+        document.addEventListener('htmx:timeout', showFallback);
       })();
     </script>
   </main>
 
   <Footer />
 </Layout>
-

@@ -113,7 +113,7 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
     await expect(page.locator('#projects-list')).toContainText('Loading projects from endpoint...');
 
     // Wait for content swap to complete
-    await expect(page.locator('#projects-list .project-card')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#projects-list .project-card').first()).toBeVisible({ timeout: 5000 });
   });
 
   // TC-F2-08: API 500 Error Recovery
