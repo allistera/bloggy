@@ -104,20 +104,32 @@ const readingTime = Math.max(1, Math.ceil(words / 200));
     margin-bottom: 0.5rem;
   }
 
-  article pre {
-    background-color: rgb(9, 9, 11);
+  /* Shiki code blocks — keep chrome only; token colors come from Shiki inline styles */
+  article pre.astro-code {
     border: 1px solid rgb(39, 39, 42);
     padding: 1rem;
     border-radius: 0.25rem;
     overflow-x: auto;
-    font-family: monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.875rem;
+    line-height: 1.6;
     margin-bottom: 1.25rem;
   }
-  article code {
-    font-family: monospace;
+  article pre.astro-code code {
+    font-family: inherit;
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+  }
+  /* Inline code only (not Shiki tokens inside pre) */
+  article :not(pre) > code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     color: rgb(110, 231, 183);
     background-color: rgb(24, 24, 27);
     padding: 0.125rem 0.25rem;
     border-radius: 0.125rem;
+    font-size: 0.875em;
   }
 </style>

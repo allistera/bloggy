@@ -9,8 +9,22 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   site: 'https://allisterantosik.com',
   adapter: vercel(),
+  // Explicit Shiki syntax highlighting for Markdown + MDX (not Prism)
+  markdown: {
+    syntaxHighlight: 'shiki',
+    shikiConfig: {
+      // Dark theme aligned with zinc/emerald site chrome
+      theme: 'github-dark-dimmed',
+      wrap: true,
+      // Common blog langs are built-in; leave langs empty for full bundle defaults
+      langs: [],
+    },
+  },
   integrations: [
-    mdx(),
+    mdx({
+      // Inherit markdown.shikiConfig from the root markdown config
+      syntaxHighlight: 'shiki',
+    }),
     // Runtime SDK options live in sentry.client.config.ts / sentry.server.config.ts
     sentry({
       // Source map upload (set SENTRY_AUTH_TOKEN + SENTRY_ORG in CI/Vercel)
