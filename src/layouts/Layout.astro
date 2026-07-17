@@ -12,7 +12,7 @@ interface Props {
 const {
   title,
   description = 'Lead SRE & AIOps Engineer Portfolio and Blog — automation, reliability, and high-performance systems.',
-  image = '/favicon.svg',
+  image = '/logo.png',
   noindex = false,
 } = Astro.props;
 
@@ -51,9 +51,16 @@ const ogImage = image.startsWith('http')
         image: ogImage,
       }}
       extend={{
-        link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+        link: [
+          { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+          { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
+          { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+        ],
       }}
     />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="htmx-config" content='{"timeout": 3000}' />
     <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
   </head>
