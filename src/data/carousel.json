@@ -1,0 +1,23 @@
+[
+  {
+    "id": "chaos-mesh-dashboard",
+    "title": "Chaos Mesh Control Plane",
+    "description": "Real-time telemetry and fault injection dashboard.",
+    "image": "/assets/screenshots/chaos-mesh.png",
+    "link": "https://github.com/example/chaos-mesh-dashboard"
+  },
+  {
+    "id": "cost-optimizer-ui",
+    "title": "Cost Optimization Analytics",
+    "description": "Cluster resource utilization and savings analysis recommendations.",
+    "image": "/assets/screenshots/cost-optimizer.png",
+    "link": "https://github.com/example/cost-optimizer-ui"
+  },
+  {
+    "id": "aiops-anomaly-detector",
+    "title": "AIOps Engine Logs",
+    "description": "Anomaly detection visualizer with historical baseline comparisons.",
+    "image": "/assets/screenshots/aiops-detector.png",
+    "link": "https://github.com/example/aiops-anomaly-detector"
+  }
+]

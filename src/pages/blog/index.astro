@@ -1,0 +1,144 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+// Fetch and filter posts at build time
+const allPosts = await getCollection('blog');
+const now = new Date();
+
+const posts = allPosts
+  .filter(post => {
+    // Exclude drafts
+    if (post.data.draft) return false;
+    // Exclude future-dated posts
+    if (new Date(post.data.pubDate) > now) return false;
+    return true;
+  })
+  .map(post => {
+    // Calculate reading time
+    const words = (post.body ?? '').split(/\s+/).filter(Boolean).length;
+    const readingTime = Math.max(1, Math.ceil(words / 200));
+    return {
+      ...post,
+      readingTime: `${readingTime} min read`
+    };
+  })
+  .sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime());
+
+// Collect all unique tags
+const allTags = Array.from(new Set(posts.flatMap(post => post.data.tags)));
+---
+
+<Layout title="Allister Antosik - Lead SRE & AIOps Blog">
+  <Header />
+
+  <main class="py-12 flex-1 flex flex-col gap-8 w-full">
+    <section class="flex flex-col gap-4">
+      <h1 class="text-4xl font-extrabold tracking-tight text-emerald-400">
+        &gt;_ SRE & AIOps Insights
+      </h1>
+      <p class="text-zinc-400 max-w-2xl leading-relaxed">
+        Deep dives, architectural reviews, and guides on cloud infrastructure reliability, automation, and anomaly detection.
+      </p>
+    </section>
+
+    <!-- Tag Cloud -->
+    {allTags.length > 0 && (
+      <section class="flex flex-wrap gap-2 py-2 border-y border-zinc-900">
+        <span class="text-xs text-zinc-500 font-mono self-center mr-2">Filter by Tag:</span>
+        <button 
+          class="tag-filter-btn px-2.5 py-1 text-xs font-mono rounded bg-emerald-500 text-zinc-950 font-bold hover:bg-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500" 
+          data-tag="all">
+          [ All ]
+        </button>
+        {allTags.map(tag => (
+          <button 
+            class="tag-filter-btn px-2.5 py-1 text-xs font-mono rounded bg-zinc-900 text-zinc-400 border border-zinc-800 hover:border-emerald-500 hover:text-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500" 
+            data-tag={tag}>
+            #{tag}
+          </button>
+        ))}
+      </section>
+    )}
+
+    <!-- Posts Grid -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full" id="blog-posts-list">
+      {posts.length === 0 ? (
+        <div class="col-span-full text-center text-zinc-500 font-mono py-12">
+          No articles published yet.
+        </div>
+      ) : (
+        posts.map(post => (
+          <article 
+            class="blog-post-card p-6 rounded bg-zinc-900 border border-zinc-800 flex flex-col justify-between gap-4 hover:border-emerald-500 transition-colors"
+            data-tags={JSON.stringify(post.data.tags)}>
+            <div class="flex flex-col gap-2">
+              <div class="flex justify-between items-center text-xs text-zinc-500 font-mono">
+                <span>{new Date(post.data.pubDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                <span class="reading-time">{post.readingTime}</span>
+              </div>
+              <a href={`/blog/${post.id}`} class="group">
+                <h2 class="text-xl font-bold text-zinc-100 font-mono tracking-wide group-hover:text-emerald-400 transition-colors">
+                  {post.data.title}
+                </h2>
+              </a>
+              <p class="text-sm text-zinc-400 leading-relaxed">
+                {post.data.description}
+              </p>
+            </div>
+
+            <div class="flex flex-wrap gap-2 pt-4 border-t border-zinc-800">
+              {post.data.tags.map(tag => (
+                <span class="blog-card-tag px-2 py-0.5 text-xs font-mono rounded bg-zinc-950 text-emerald-400 border border-zinc-800">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          </article>
+        ))
+      )}
+    </section>
+  </main>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const filterButtons = document.querySelectorAll('.tag-filter-btn');
+      const posts = document.querySelectorAll('.blog-post-card');
+
+      filterButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const selectedTag = btn.getAttribute('data-tag');
+
+          // Highlight selected filter button
+          filterButtons.forEach(b => {
+            if (b === btn) {
+              b.classList.add('bg-emerald-500', 'text-zinc-950', 'font-bold');
+              b.classList.remove('bg-zinc-900', 'text-zinc-400', 'border-zinc-800');
+            } else {
+              b.classList.remove('bg-emerald-500', 'text-zinc-950', 'font-bold');
+              b.classList.add('bg-zinc-900', 'text-zinc-400', 'border-zinc-800');
+            }
+          });
+
+          // Filter posts
+          posts.forEach(post => {
+            if (selectedTag === 'all') {
+              post.classList.remove('hidden');
+            } else {
+              const postTags = JSON.parse(post.getAttribute('data-tags') || '[]');
+              if (postTags.includes(selectedTag)) {
+                post.classList.remove('hidden');
+              } else {
+                post.classList.add('hidden');
+              }
+            }
+          });
+        });
+      });
+    });
+  </script>
+
+  <Footer />
+</Layout>

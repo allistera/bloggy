@@ -1,0 +1,31 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="404 - Page Not Found">
+  <Header />
+
+  <main class="py-12 flex-1 flex flex-col items-center justify-center gap-6 w-full text-center">
+    <div class="font-mono flex flex-col gap-3 items-center">
+      <div class="text-6xl font-bold text-red-500 tracking-wider animate-pulse">
+        [ 404_ ]
+      </div>
+      <h1 class="text-2xl font-bold text-zinc-100 mt-2">
+        Error: Resource Not Found
+      </h1>
+      <p class="text-sm text-zinc-500 max-w-md mt-1 leading-relaxed">
+        The requested path does not exist in our system registry. It may have been relocated, deleted, or is temporarily offline.
+      </p>
+    </div>
+
+    <div class="mt-4">
+      <a href="/blog" class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-bold font-mono text-sm rounded transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400">
+        &gt;_ Return to Blog
+      </a>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>

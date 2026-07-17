@@ -1,0 +1,120 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+export async function getStaticPaths() {
+  const allPosts = await getCollection('blog');
+  const now = new Date();
+  
+  // Only generate paths for published, non-draft posts
+  const posts = allPosts.filter(post => {
+    if (post.data.draft) return false;
+    if (new Date(post.data.pubDate) > now) return false;
+    return true;
+  });
+
+  return posts.map(post => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+interface Props {
+  post: any;
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+// Calculate reading time
+const words = (post.body ?? '').split(/\s+/).filter(Boolean).length;
+const readingTime = Math.max(1, Math.ceil(words / 200));
+---
+
+<Layout title={`${post.data.title} - Allister Antosik`}>
+  <Header />
+
+  <main class="py-12 flex-1 flex flex-col gap-6 w-full max-w-3xl mx-auto">
+    <!-- Breadcrumb / Back Link -->
+    <div class="mb-4">
+      <a href="/blog" class="text-emerald-400 hover:text-emerald-300 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 p-1 rounded">
+        &lt;_ Back to Blog
+      </a>
+    </div>
+
+    <!-- Article Header -->
+    <header class="flex flex-col gap-3 pb-6 border-b border-zinc-800">
+      <div class="flex items-center gap-4 text-xs text-zinc-500 font-mono">
+        <span>{new Date(post.data.pubDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+        <span>•</span>
+        <span>{readingTime} min read</span>
+      </div>
+      <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-zinc-100 font-mono">
+        {post.data.title}
+      </h1>
+      
+      <!-- Tags -->
+      <div class="flex flex-wrap gap-2 pt-2">
+        {post.data.tags.map((tag: string) => (
+          <span class="px-2.5 py-0.5 text-xs font-mono rounded bg-zinc-900 text-emerald-400 border border-zinc-800">
+            #{tag}
+          </span>
+        ))}
+      </div>
+    </header>
+
+    <!-- Markdown Content Body -->
+    <article class="prose prose-invert prose-emerald max-w-none text-zinc-300 leading-relaxed font-sans space-y-6 pt-6">
+      <Content />
+    </article>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style is:global>
+  /* Markdown content styling overrides */
+  article h1, article h2, article h3, article h4 {
+    font-family: monospace;
+    font-weight: 700;
+    color: rgb(244, 244, 245);
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    tracking: -0.025em;
+  }
+  article h1 { font-size: 2.25rem; }
+  article h2 { font-size: 1.5rem; border-left: 3px solid rgb(52, 211, 153); padding-left: 0.75rem; }
+  article h3 { font-size: 1.25rem; }
+  
+  article p {
+    margin-bottom: 1.25rem;
+  }
+
+  article ul {
+    list-style-type: square;
+    padding-left: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+  article li {
+    margin-bottom: 0.5rem;
+  }
+
+  article pre {
+    background-color: rgb(9, 9, 11);
+    border: 1px solid rgb(39, 39, 42);
+    padding: 1rem;
+    border-radius: 0.25rem;
+    overflow-x: auto;
+    font-family: monospace;
+    margin-bottom: 1.25rem;
+  }
+  article code {
+    font-family: monospace;
+    color: rgb(110, 231, 183);
+    background-color: rgb(24, 24, 27);
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.125rem;
+  }
+</style>

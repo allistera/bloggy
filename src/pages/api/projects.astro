@@ -1,0 +1,41 @@
+---
+export const partial = true;
+
+// Mock SRE project data for M1 setup
+const projects = [
+  {
+    name: 'automated-chaos-mesh',
+    description: 'Kubernetes chaos engineering controller designed to inject faults and verify resiliency of distributed AIOps microservices.',
+    stars: 342,
+    forks: 47,
+    language: 'Go',
+    updatedAt: '2026-07-10T14:30:00Z'
+  },
+  {
+    name: 'kubernetes-cost-optimizer',
+    description: 'An automated resource profiling and rightsizing controller targeting Kubernetes clusters using historical telemetry.',
+    stars: 189,
+    forks: 23,
+    language: 'TypeScript',
+    updatedAt: '2026-07-15T09:15:00Z'
+  }
+];
+---
+
+{projects.map(project => (
+  <div class="project-card p-6 rounded bg-zinc-900 border border-zinc-800 flex flex-col justify-between gap-4 hover:border-emerald-500 transition-colors">
+    <div class="flex flex-col gap-2">
+      <h3 class="text-xl font-bold text-zinc-100 font-mono tracking-wide">{project.name}</h3>
+      <p class="text-sm text-zinc-400 leading-relaxed">{project.description}</p>
+    </div>
+    
+    <div class="flex flex-wrap items-center justify-between text-xs text-zinc-500 font-mono pt-4 border-t border-zinc-800">
+      <div class="flex gap-4">
+        <span>Language: <strong class="text-emerald-400">{project.language}</strong></span>
+        <span>Stars: <strong class="text-zinc-300">{project.stars}</strong></span>
+        <span>Forks: <strong class="text-zinc-300">{project.forks}</strong></span>
+      </div>
+      <span>Updated: {new Date(project.updatedAt).toLocaleDateString()}</span>
+    </div>
+  </div>
+))}

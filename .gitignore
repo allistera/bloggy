@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# build
+dist/
+.astro/
+
+# env / secrets
+.env
+.env.*
+!.env.example
+
+# test / tooling artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+coverage/
+
+# editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# agent working state
+.agents/

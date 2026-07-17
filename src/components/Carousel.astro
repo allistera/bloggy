@@ -1,0 +1,207 @@
+---
+import staticData from '../data/carousel.json';
+---
+
+<div id="carousel-container" tabindex="0" class="relative w-full border border-zinc-800 rounded bg-zinc-950 p-6 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+  <!-- Browser Mockup Header -->
+  <div class="flex items-center gap-2 px-4 py-2 bg-zinc-900 border-b border-zinc-800 rounded-t -mx-6 -mt-6 mb-6">
+    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+    <span class="text-xs text-zinc-500 font-mono ml-4">https://github.com/allistera</span>
+  </div>
+
+  <!-- Slides Container -->
+  <div class="relative w-full overflow-hidden min-h-[260px] flex items-center justify-center">
+    <div id="carousel-slides" class="w-full">
+      <!-- Slides will be injected dynamically -->
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div id="carousel-controls" class="flex justify-between items-center mt-6 pt-4 border-t border-zinc-900">
+    <button id="carousel-prev" class="px-3 py-1 bg-zinc-900 border border-zinc-800 rounded text-zinc-400 hover:text-emerald-400 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
+      &lt; Prev
+    </button>
+    
+    <div id="carousel-dots" class="flex gap-2">
+      <!-- Dots will be injected dynamically -->
+    </div>
+
+    <button id="carousel-next" class="px-3 py-1 bg-zinc-900 border border-zinc-800 rounded text-zinc-400 hover:text-emerald-400 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
+      Next &gt;
+    </button>
+  </div>
+</div>
+
+<script define:vars={{ staticData }}>
+  document.addEventListener('DOMContentLoaded', () => {
+    let data = window.carouselData || null;
+
+    const container = document.getElementById('carousel-container');
+    const slidesContainer = document.getElementById('carousel-slides');
+    const prevBtn = document.getElementById('carousel-prev');
+    const nextBtn = document.getElementById('carousel-next');
+    const dotsContainer = document.getElementById('carousel-dots');
+
+    if (!container || !slidesContainer) return;
+
+    let currentIndex = 0;
+
+    const initCarousel = (carouselItems) => {
+      if (!carouselItems || carouselItems.length === 0) return;
+
+      const isSingle = carouselItems.length === 1;
+
+      // Hide navigation controls if single item
+      if (isSingle) {
+        if (prevBtn) prevBtn.style.display = 'none';
+        if (nextBtn) nextBtn.style.display = 'none';
+        if (dotsContainer) dotsContainer.style.display = 'none';
+      } else {
+        if (prevBtn) prevBtn.style.display = 'block';
+        if (nextBtn) nextBtn.style.display = 'block';
+        if (dotsContainer) dotsContainer.style.display = 'flex';
+      }
+
+      // Render slides
+      slidesContainer.innerHTML = carouselItems.map((item, index) => {
+        const hasLink = item.link && item.link.trim() !== '';
+        const linkHtml = hasLink 
+          ? `<a href="${item.link}" target="_blank" rel="noopener noreferrer" class="carousel-link inline-block px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-bold font-mono text-xs rounded transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400">View Repository</a>`
+          : `<span class="carousel-link inline-block px-4 py-2 bg-zinc-900 text-zinc-600 font-mono text-xs rounded opacity-50 cursor-not-allowed border border-zinc-800">No Link Available</span>`;
+
+        return `
+          <div class="carousel-slide ${index === currentIndex ? 'active' : 'hidden'} flex flex-col md:flex-row gap-6 items-center w-full" data-index="${index}">
+            <div class="w-full md:w-1/2 flex justify-center">
+              <img class="carousel-image max-h-56 rounded border border-zinc-800 object-cover" 
+                   src="${item.image}" 
+                   alt="${item.title}" 
+                   onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22200%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%2318181b%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23ff3333%22 font-family=%22monospace%22 font-size=%2214%22>Image Load Failure</text></svg>'" />
+            </div>
+            <div class="w-full md:w-1/2 flex flex-col gap-4">
+              <h3 class="carousel-title text-xl font-bold text-zinc-100 font-mono tracking-wide">${item.title}</h3>
+              <p class="carousel-description text-sm text-zinc-400 leading-relaxed">${item.description}</p>
+              <div class="pt-2">
+                ${linkHtml}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('\n');
+
+      // Render dots
+      if (dotsContainer && !isSingle) {
+        dotsContainer.innerHTML = carouselItems.map((_, index) => `
+          <button class="carousel-dot w-3 h-3 rounded-full border border-zinc-700 bg-zinc-900 transition-colors focus:outline-none focus:ring-1 focus:ring-emerald-500 ${index === currentIndex ? 'active bg-emerald-400 border-emerald-400' : ''}" 
+                  data-carousel-dot="${index}" 
+                  aria-label="Go to slide ${index + 1}"></button>
+        `).join('\n');
+
+        // Add dot click handlers
+        const dots = dotsContainer.querySelectorAll('.carousel-dot');
+        dots.forEach(dot => {
+          dot.addEventListener('click', () => {
+            const idx = parseInt(dot.getAttribute('data-carousel-dot') || '0', 10);
+            goToSlide(idx, carouselItems);
+          });
+        });
+      }
+    };
+
+    const goToSlide = (index, carouselItems) => {
+      const slides = slidesContainer.querySelectorAll('.carousel-slide');
+      const dots = dotsContainer ? dotsContainer.querySelectorAll('.carousel-dot') : [];
+      
+      slides.forEach(slide => {
+        slide.classList.remove('active');
+        slide.classList.add('hidden');
+      });
+      dots.forEach(dot => {
+        dot.classList.remove('active', 'bg-emerald-400', 'border-emerald-400');
+      });
+
+      currentIndex = (index + carouselItems.length) % carouselItems.length;
+
+      const newActiveSlide = slidesContainer.querySelector(`.carousel-slide[data-index="${currentIndex}"]`);
+      if (newActiveSlide) {
+        newActiveSlide.classList.remove('hidden');
+        newActiveSlide.classList.add('active');
+      }
+
+      if (dots[currentIndex]) {
+        dots[currentIndex].classList.add('active', 'bg-emerald-400', 'border-emerald-400');
+      }
+    };
+
+    // Keyboard navigation
+    container.addEventListener('keydown', (e) => {
+      if (!data || data.length <= 1) return;
+      if (e.key === 'ArrowRight') {
+        goToSlide(currentIndex + 1, data);
+        e.preventDefault();
+      } else if (e.key === 'ArrowLeft') {
+        goToSlide(currentIndex - 1, data);
+        e.preventDefault();
+      }
+    });
+
+    // Touch Swipe handling
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    container.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+    
+    container.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    }, { passive: true });
+    
+    const handleSwipe = () => {
+      if (!data || data.length <= 1) return;
+      const swipeThreshold = 50;
+      if (touchStartX - touchEndX > swipeThreshold) {
+        goToSlide(currentIndex + 1, data); // Swipe left -> Next
+      } else if (touchEndX - touchStartX > swipeThreshold) {
+        goToSlide(currentIndex - 1, data); // Swipe right -> Prev
+      }
+    };
+
+    // Button clicks
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        if (data) goToSlide(currentIndex - 1, data);
+      });
+    }
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        if (data) goToSlide(currentIndex + 1, data);
+      });
+    }
+
+    // Load data
+    const loadData = async () => {
+      if (window.carouselData) {
+        data = window.carouselData;
+        initCarousel(data);
+      } else {
+        try {
+          const res = await fetch('/carousel.json');
+          if (res.ok) {
+            data = await res.json();
+            initCarousel(data);
+          } else {
+            throw new Error('Failed fetch');
+          }
+        } catch (e) {
+          data = staticData;
+          initCarousel(data);
+        }
+      }
+    };
+
+    loadData();
+  });
+</script>
