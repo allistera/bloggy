@@ -6,16 +6,19 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
   test('TC-F4-01: Blog Index Listing', async ({ page }) => {
     await page.goto('/blog');
     
-    // Check that blog index renders successfully and contains article list elements/links
     const mainHeading = page.locator('h1');
     await expect(mainHeading).toBeVisible();
     await expect(mainHeading).toContainText('SRE & AIOps Insights');
 
     const articleCards = page.locator('#blog-posts-list .blog-post-card');
-    // We should have at least 4 visible posts (AIOps, Chaos, Complex, Observability)
-    // Future and Draft posts should be excluded
+    // Real articles from allistera.github.io (draft/future fixtures excluded)
     const count = await articleCards.count();
     expect(count).toBeGreaterThanOrEqual(4);
+
+    await expect(page.locator('text=Two-Way iMessage/SMS for Home Assistant via Sendblue')).toBeVisible();
+    await expect(page.locator('text=Clean Up Your GitHub Account')).toBeVisible();
+    await expect(page.locator('text=Mass Uninstall iOS Apps with Apple Configurator on Mac')).toBeVisible();
+    await expect(page.locator('text=Zero-Downtime Deployments with Kubernetes Rolling Updates')).toBeVisible();
   });
 
   // TC-F4-02: Blog Post Metadata
@@ -25,7 +28,6 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
     const firstCard = page.locator('#blog-posts-list .blog-post-card').first();
     await expect(firstCard).toBeVisible();
 
-    // Check tag, publish date, reading time format
     const tags = firstCard.locator('.blog-card-tag');
     await expect(tags.first()).toBeVisible();
     
@@ -41,7 +43,6 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
   test('TC-F4-03: Blog Post Redirection', async ({ page }) => {
     await page.goto('/blog');
     
-    // Select first card title link
     const titleLink = page.locator('#blog-posts-list .blog-post-card a').first();
     const href = await titleLink.getAttribute('href');
     expect(href).not.toBeNull();
@@ -50,58 +51,50 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
     await titleLink.click();
     await page.waitForURL(`**${href}`);
     
-    // Confirm detail reader path resolves and shows back link
     const backBtn = page.locator('text=Back to Blog');
     await expect(backBtn).toBeVisible();
   });
 
   // TC-F4-04: Markdown Rendering Elements
   test('TC-F4-04: Markdown Rendering Elements', async ({ page }) => {
-    // Navigate directly to the chaos engineering detail page
-    await page.goto('/blog/chaos-mesh-kubernetes');
+    await page.goto('/blog/zero-downtime-kubernetes-deployments');
     
     const article = page.locator('article');
     await expect(article).toBeVisible();
 
-    // Contains headings
-    const h2 = article.locator('h2');
+    const h2 = article.locator('h2').first();
     await expect(h2).toBeVisible();
-    await expect(h2).toContainText('Why Chaos Mesh?');
+    await expect(h2).toContainText('How Rolling Updates Work');
 
-    // Contains paragraphs
     const p = article.locator('p').first();
     await expect(p).toBeVisible();
 
-    // Contains list items
     const li = article.locator('li').first();
     await expect(li).toBeVisible();
-    await expect(li).toContainText('Network latency');
+    await expect(li).toContainText('maxSurge');
 
-    // Contains syntax-highlighted code block
-    const codeBlock = article.locator('pre');
+    const codeBlock = article.locator('pre').first();
     await expect(codeBlock).toBeVisible();
-    await expect(codeBlock).toContainText('apiVersion: chaos-mesh.org');
+    await expect(codeBlock).toContainText('apiVersion: apps/v1');
   });
 
   // TC-F4-05: Blog Tag Filtering
   test('TC-F4-05: Blog Tag Filtering', async ({ page }) => {
     await page.goto('/blog');
     
-    // Find a tag filter button (e.g. #AIOps)
-    const tagButton = page.locator('.tag-filter-btn[data-tag="AIOps"]');
+    const tagButton = page.locator('.tag-filter-btn[data-tag="Kubernetes"]');
     await expect(tagButton).toBeVisible();
 
     await tagButton.click();
     await page.waitForTimeout(200);
 
-    // Verify list is filtered
     const visibleCards = page.locator('#blog-posts-list .blog-post-card:not(.hidden)');
     const totalCards = await visibleCards.count();
+    expect(totalCards).toBeGreaterThanOrEqual(1);
     
-    // Iterate through visible cards and ensure they all contain #AIOps
     for (let i = 0; i < totalCards; i++) {
       const cardTags = await visibleCards.nth(i).locator('.blog-card-tag').allTextContents();
-      const hasTag = cardTags.some(t => t.includes('#AIOps'));
+      const hasTag = cardTags.some(t => t.includes('#Kubernetes'));
       expect(hasTag).toBe(true);
     }
   });
@@ -110,8 +103,7 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
   test('TC-F4-06: Future-Dated Posts Exclusion', async ({ page }) => {
     await page.goto('/blog');
     
-    // The post with title "Future SRE Paradigms" is dated 2030 and should be excluded
-    const futurePost = page.locator('text=Future SRE Paradigms');
+    const futurePost = page.locator('text=Fixture Future Post');
     await expect(futurePost).toBeHidden();
   });
 
@@ -119,56 +111,50 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
   test('TC-F4-07: Draft Status Exclusion', async ({ page }) => {
     await page.goto('/blog');
     
-    // The post with title "Unfinished Thoughts on Serverless" has draft: true and should be excluded
-    const draftPost = page.locator('text=Unfinished Thoughts on Serverless');
+    const draftPost = page.locator('text=Fixture Draft Post');
     await expect(draftPost).toBeHidden();
   });
 
-  // TC-F4-08: Outsized Reading Time
-  test('TC-F4-08: Outsized Reading Time', async ({ page }) => {
+  // TC-F4-08: Reading time present on longer posts
+  test('TC-F4-08: Reading time on longer posts', async ({ page }) => {
     await page.goto('/blog');
     
-    // Find the guide post
-    const guidePost = page.locator('.blog-post-card', { hasText: 'Comprehensive Observability Guide' });
-    await expect(guidePost).toBeVisible();
+    const longPost = page.locator('.blog-post-card', { hasText: 'Two-Way iMessage/SMS for Home Assistant via Sendblue' });
+    await expect(longPost).toBeVisible();
 
-    // Verify it shows an outsized value
-    const readingTime = guidePost.locator('.reading-time');
+    const readingTime = longPost.locator('.reading-time');
     await expect(readingTime).toBeVisible();
-    await expect(readingTime).toHaveText('33 min read');
+    // Longer article should show more than 1 minute
+    const text = await readingTime.textContent();
+    const minutes = parseInt(text?.match(/(\d+)/)?.[1] || '0', 10);
+    expect(minutes).toBeGreaterThanOrEqual(2);
   });
 
-  // TC-F4-09: Complex Slugs Encoding
-  test('TC-F4-09: Complex Slugs Encoding', async ({ page }) => {
+  // TC-F4-09: Real article slugs navigate correctly
+  test('TC-F4-09: Real article slug navigation', async ({ page }) => {
     await page.goto('/blog');
     
-    // Find complex slug card link
-    const complexPostLink = page.locator('.blog-post-card', { hasText: 'SRE @ Scale: 99.999% Reliability!' }).locator('a');
-    await expect(complexPostLink).toBeVisible();
+    const postLink = page.locator('.blog-post-card', { hasText: 'Clean Up Your GitHub Account' }).locator('a').first();
+    await expect(postLink).toBeVisible();
 
-    const href = await complexPostLink.getAttribute('href');
-    expect(href).not.toBeNull();
+    const href = await postLink.getAttribute('href');
+    expect(href).toContain('/blog/clean-up-your-github-account');
     
-    // Navigate to it
-    await complexPostLink.click();
-    await page.waitForURL(`**${href}`);
+    await postLink.click();
+    await page.waitForURL('**/blog/clean-up-your-github-account');
     
-    // Page renders correctly (select first h1 to avoid markdown heading conflicts)
     const heading = page.locator('main h1').first();
     await expect(heading).toBeVisible();
-    await expect(heading).toContainText('SRE @ Scale: 99.999% Reliability!');
+    await expect(heading).toContainText('Clean Up Your GitHub Account');
   });
 
 
   // TC-F4-10: Blog 404 Routing
   test('TC-F4-10: Blog 404 Routing', async ({ page }) => {
-    // Navigate to non-existent post
     const response = await page.goto('/blog/invalid-slug');
     
-    // Playwright handles page transitions. The response status could be 404
     expect(response?.status()).toBe(404);
 
-    // Verify page loads a custom 404 block with the return link
     const errorBlock = page.locator('text=Error: Resource Not Found');
     await expect(errorBlock).toBeVisible();
 

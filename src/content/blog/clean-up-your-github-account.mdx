@@ -1,0 +1,90 @@
+---
+title: "Clean Up Your GitHub Account"
+description: "I ended up with more than 100 abandoned GitHub repos, so I built github-smash, a GitHub Actions cleanup tool that deletes anything not on a whitelist."
+pubDate: 2026-04-15
+tags: ["GitHub", "Automation", "DevTools"]
+draft: false
+---
+
+# Clean Up Your GitHub Account
+
+At some point my GitHub account turned into the digital equivalent of a garage full of broken chairs, mystery cables, and boxes labelled "might be useful later".
+
+I had created well over 100 repositories. Some were real projects. Some were experiments. Some were "I just want to test one tiny thing" repos that got a single commit and were then quietly abandoned to the elements.
+
+After looking at the pile for long enough, I built [github-smash](https://github.com/allistera/github-smash). It is a small tool that runs through a GitHub Actions workflow and deletes every repository that is not on a whitelist. Which is a mildly alarming sentence, but also very satisfying.
+
+## Why I Built It
+
+I did not want to manually inspect repo after repo asking:
+
+- Is this still useful?
+- Does this contain anything important?
+- Why did I name this one `test-final-2-actual`?
+- Why are there four versions of the same half-finished idea?
+
+That kind of cleanup sounds manageable until you are 37 repositories deep and opening another abandoned prototype from a random Tuesday night.
+
+So instead of deleting things one by one, I wanted something boring and repeatable:
+
+1. Keep the projects I know I care about.
+2. Preview what is about to disappear.
+3. Remove the rest.
+
+## How `github-smash` Works
+
+The setup is intentionally simple:
+
+- A `repo-whitelist.yml` file contains the repositories to keep in `owner/repo` format.
+- A GitHub Actions workflow fetches all repositories owned by the authenticated user.
+- The workflow compares that full list against the whitelist.
+- Anything not on the whitelist is either reported in `dry_run` mode or deleted for real.
+
+A tiny whitelist looks like this:
+
+```yaml
+repositories:
+  - allistera/allistera.github.io
+  - allistera/github-smash
+  - allistera/things-sorter
+```
+
+The workflow uses a token stored as a repository secret, so the cleanup logic lives in GitHub and can be triggered from the Actions tab without needing to run a local script.
+
+## Why I Chose a Whitelist Instead of a Blacklist
+
+A blacklist sounds safer at first. You make a list of repos to delete and leave everything else alone. Very sensible. Very measured. Very adult.
+
+The problem is that my account was already far beyond that point.
+
+I did not have a neat list of five obvious repositories to remove. I had a sprawling heap of forgotten side projects, throwaway tests, abandoned demos, and "I will sort this out later" repos. A blacklist would have meant identifying every single repo I was confident could be deleted. That was exactly the job I was trying to avoid.
+
+The whitelist approach flipped the decision:
+
+- If I know I want to keep it, it goes on the whitelist.
+- If I am unsure, the dry run gives me a chance to catch it before anything happens.
+- If it is not important enough to make the keep list, it is probably part of the mess.
+
+It also matched the risk profile better. There were too many old repositories where I could not be completely sure what was in them anymore. Old config. Forgotten experiments. Possibly some ancient secret-shaped mistake from a less disciplined era. I did not want to pretend I had perfect certainty about what was safe to throw away.
+
+The whitelist forced me to decide what deserved to survive, instead of trying to maintain a giant list of everything I thought was probably junk.
+
+## Dry Run First, Chaos Second
+
+`github-smash` has a `dry_run` mode, which is the feature that stops this whole idea becoming performance art.
+
+In dry run, the workflow tells you:
+
+- how many repositories it found
+- how many are on the whitelist
+- what would be deleted
+
+That gives you one last chance to spot the repo you forgot about before the workflow gets enthusiastic.
+
+Only when the output looks right do you run it again with `dry_run` set to `false`.
+
+## A Slightly Unhinged Way to Tidy Up
+
+This is not enterprise-grade lifecycle management. This is just me looking at a GitHub account full of neglected projects and deciding it was time to stop pretending I would come back to `weekend-tooling-test` one day.
+
+If your GitHub account has also become a small software graveyard, [github-smash](https://github.com/allistera/github-smash) might help. Add the repos you actually care about, run the workflow in dry-run mode, and let the cleanup begin.

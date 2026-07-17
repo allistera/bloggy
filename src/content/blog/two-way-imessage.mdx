@@ -1,0 +1,228 @@
+---
+title: "Two-Way iMessage/SMS for Home Assistant via Sendblue"
+description: "Talk to your Home Assistant setup using iMessage."
+pubDate: 2026-07-04
+tags: ["Home Assistant", "iMessage", "Automation"]
+draft: false
+---
+
+A how-to for wiring Sendblue into Home Assistant so that any automation can send iMessage/SMS notifications, and inbound texts are answered by Home Assistant Assist — turning a phone number into a conversational interface for your house.
+
+There is no native Home Assistant integration for Sendblue (don't confuse it with SensorBlue or Sendinblue/Brevo). None is needed: Sendblue is a REST API plus webhooks, which maps directly onto `rest_command` for sending and a webhook trigger for receiving.
+
+## Architecture
+
+```
+Outbound:  automation → script.notify_sendblue → rest_command.sendblue_send → Sendblue API → phone
+
+Inbound:   phone → Sendblue receive webhook → HA /api/webhook/<id>?token=<secret>
+              → conditions (token, direction, allowlist, non-empty)
+              → conversation.process (Assist)
+              → script.notify_sendblue → reply to sender
+```
+
+Files touched: `secrets.yaml`, `configuration.yaml`, `scripts.yaml`, `automations.yaml`, plus the Sendblue dashboard and two Home Assistant settings pages.
+
+## Prerequisites
+
+You need a Sendblue account (dashboard.sendblue.com) with an API key ID and API secret key from the API Keys section, and the phone number of a line assigned to your account — `from_number` is mandatory on every send and must be one of your lines (`GET /api/lines` with the auth headers lists them). On the free shared-line plan, a recipient must be added as a contact on your account and must text your Sendblue number once before outbound messages to them will deliver; do this handshake with your own phone before testing, because the API can accept a message (`QUEUED`) that then silently never arrives. Production use is the paid per-line plan, so validate everything in the sandbox first — Sendblue is US-centric and UK numbers are worth confirming early.
+
+On the Home Assistant side you need an HTTPS-reachable external URL (Cloudflare tunnel, Nabu Casa, or reverse proxy) for the inbound webhook, and Assist configured with a conversation agent.
+
+## Step 1 — Secrets
+
+```yaml
+# secrets.yaml
+sendblue_api_key_id: "YOUR_KEY_ID"
+sendblue_api_secret_key: "YOUR_SECRET_KEY"
+```
+
+## Step 2 — The send primitive (rest_command)
+
+```yaml
+# configuration.yaml
+rest_command:
+  sendblue_send:
+    url: "https://api.sendblue.co/api/send-message"
+    method: POST
+    content_type: "application/json"
+    headers:
+      sb-api-key-id: !secret sendblue_api_key_id
+      sb-api-secret-key: !secret sendblue_api_secret_key
+    payload: >
+      {
+        "number": "+{{ number | string | replace('+', '') }}",
+        "from_number": "{{ from_number }}",
+        "content": "{{ content }}"
+        {% if media_url is defined and media_url %},"media_url": "{{ media_url }}"{% endif %}
+      }
+```
+
+The `number` line is deliberately defensive: `+{{ number | string | replace('+', '') }}` accepts an integer or a string, with or without a leading plus, and always emits valid E.164. This matters because Home Assistant's template engine converts rendered results that parse as Python literals into native types, and `+447700900123` is a valid numeric literal — so a phone number passed through automation or script variables arrives here as the integer `447700900123` with the plus stripped. Normalising inside the payload is the one place immune to that coercion, because the number is embedded in a larger JSON string that cannot be literal-parsed. See Troubleshooting for the full story.
+
+`rest_command` is file-based YAML: changes only take effect after Developer Tools → YAML → reload REST commands (or a restart). An edited-but-not-reloaded payload is a classic silent failure.
+
+## Step 3 — The notify-style wrapper (script)
+
+This gives you `notify.*`-style call semantics (`message`, `title`, `target`), a proper form in the automation UI via `fields:`, and parallel execution so concurrent sends don't queue.
+
+```yaml
+# scripts.yaml
+notify_sendblue:
+  alias: "Notify: Sendblue"
+  description: "Send an iMessage/SMS via Sendblue"
+  mode: parallel
+  max: 10
+  fields:
+    message:
+      name: Message
+      required: true
+      selector:
+        text:
+          multiline: true
+    title:
+      name: Title
+      required: false
+      selector:
+        text:
+    target:
+      name: Target
+      description: E.164 number, defaults to you
+      required: false
+      selector:
+        text:
+    media_url:
+      name: Media URL
+      required: false
+      selector:
+        text:
+  sequence:
+    - variables:
+        resolved_target: "{{ target | default('+44XXXXXXXXXX', true) }}"
+        resolved_content: >-
+          {{ (title ~ '\n') if title is defined and title else '' }}{{ message }}
+    - action: rest_command.sendblue_send
+      data:
+        number: "{{ resolved_target }}"
+        from_number: "+1XXXXXXXXXX"
+        content: "{{ resolved_content }}"
+        media_url: "{{ media_url | default('') }}"
+```
+
+Replace the default target with your own number and `from_number` with your actual Sendblue line — a placeholder here is rejected on every send. Note that `default:` under `fields:` only prefills the UI form; it is not applied at runtime, which is why defaults are handled again in the `variables:` step.
+
+Usage from any automation:
+
+```yaml
+actions:
+  - action: script.notify_sendblue
+    data:
+      title: "Unraid"
+      message: "Parity check finished — 0 errors"
+```
+
+If you specifically need a real `notify.sendblue` service (the main reason being the `alert` integration, whose `notifiers:` only accepts notify services), the legacy REST notify platform can produce one, but it drops `title`, only uses the first `target`, and has no per-message `media_url`. For everything else the script is the better citizen.
+
+## Step 4 — Prepare Assist
+
+Two decisions before wiring the inbound leg. First, the agent: `conversation.home_assistant` is the built-in agent — fast, local, good for commands and simple questions, rigid for conversation. For a chattier experience, add an LLM conversation integration (Anthropic, OpenAI, Gemini, Ollama), enable its Control Home Assistant / Assist option so it can act on devices, and note the entity ID from the `agent_id` dropdown in Developer Tools → Actions.
+
+Second, exposure: Settings → Voice assistants → Expose. This is the blast-radius control for the entire feature — anything exposed is textable by anyone who passes the allowlist. Lights, media, and sensors are reasonable; leave locks, garage doors, and alarm panels unexposed.
+
+## Step 5 — The inbound bridge (automation)
+
+Generate a long random webhook ID and a separate shared token (`openssl rand -hex 16` for each). Your endpoint will be:
+
+```
+https://ha.yourdomain.com/api/webhook/<WEBHOOK_ID>?token=<SHARED_TOKEN>
+```
+
+```yaml
+# automations.yaml
+- alias: "Sendblue → Assist bridge"
+  mode: parallel
+  max: 10
+  triggers:
+    - trigger: webhook
+      webhook_id: "<WEBHOOK_ID>"
+      allowed_methods: [POST]
+      local_only: false
+  variables:
+    allowed_senders:
+      - "+44XXXXXXXXXX"
+  conditions:
+    - condition: template
+      value_template: "{{ trigger.query.token | default('') == '<SHARED_TOKEN>' }}"
+    - condition: template
+      value_template: "{{ trigger.json.is_outbound == false }}"
+    - condition: template
+      value_template: "{{ trigger.json.from_number in allowed_senders }}"
+    - condition: template
+      value_template: "{{ (trigger.json.content | default('') | trim | length) > 0 }}"
+  actions:
+    - variables:
+        sender: "{{ trigger.json.from_number }}"
+        incoming: "{{ trigger.json.content | trim }}"
+    - action: conversation.process
+      data:
+        text: "{{ incoming }}"
+        agent_id: conversation.home_assistant
+        language: en
+        conversation_id: "sendblue-{{ sender | replace('+', '') }}"
+      response_variable: assist
+    - action: script.notify_sendblue
+      data:
+        target: "{{ sender }}"
+        message: "{{ assist.response.speech.plain.speech | default('Done.', true) }}"
+```
+
+Design notes, each earned the hard way. The four conditions are separate rather than one combined template so that every trace shows a per-clause true/false — a single monolithic condition reports only "condition/0: false" and turns debugging into archaeology. The empty-content guard exists because tapbacks, read receipts, and media-only messages hit the receive webhook with no text and would otherwise become nonsense Assist queries. The per-sender `conversation_id` gives each person their own thread: providing the same ID continues that conversation, so follow-up questions keep context with an LLM agent (short-term only — agent chat history expires after inactivity). `mode: parallel` stops two senders serialising behind each other's LLM latency. And timing is a non-issue by construction: HA acks the webhook with a 200 immediately and runs actions asynchronously, so slow agents never trip Sendblue's 45-second retry window.
+
+## Step 6 — Point Sendblue at Home Assistant
+
+In the Sendblue dashboard, paste the full endpoint URL — including the `?token=` query string — as the receive webhook. Sendblue expects a 200 to acknowledge delivery and avoid duplicate calls; HA's webhook trigger returns that automatically.
+
+## Step 7 — Test, in fault-isolating order
+
+Test the send primitive raw from Developer Tools → Actions with `rest_command.sendblue_send` and literal values. If that fails, take HA out of the loop entirely with curl — Sendblue's response body states its complaint plainly:
+
+```bash
+curl -i -X POST 'https://api.sendblue.co/api/send-message' \
+  -H 'sb-api-key-id: YOUR_KEY_ID' \
+  -H 'sb-api-secret-key: YOUR_SECRET' \
+  -H 'Content-Type: application/json' \
+  -d '{"number":"+44XXXXXXXXXX","from_number":"+1XXXXXXXXXX","content":"curl test"}'
+```
+
+Then test the script from Developer Tools → Actions with a `message` filled in (running it by toggling the entity passes no variables and errors on the required field). Then fake an inbound message without involving Sendblue:
+
+```bash
+curl -X POST 'https://ha.yourdomain.com/api/webhook/<WEBHOOK_ID>?token=<SHARED_TOKEN>' \
+  -H 'Content-Type: application/json' \
+  -d '{"is_outbound": false, "from_number": "+44XXXXXXXXXX", "content": "is the kitchen light on"}'
+```
+
+If that round-trips a reply to your phone, the HA side is complete. Finally, send a real text from a verified, allowlisted number to the Sendblue line to prove their webhook delivery.
+
+## Troubleshooting
+
+Every entry below is a failure mode actually hit while building this.
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Config won't reload: "while scanning a quoted scalar ... unexpected end of stream" | Stray quote character from copy/paste at the end of a YAML file | Delete it; run Developer Tools → YAML → Check configuration before restarting |
+| Script "runs" but nothing sends, no errors | Placeholder `from_number`; or sandbox recipient never completed contact verification; or script invoked without data | Use a real line from your account; complete the text-in handshake; call via Developer Tools → Actions with fields filled |
+| Webhook fires but conditions always fail | Allowlist still contains a placeholder number; token missing from the dashboard URL; sender identity isn't your number (iMessage can send from an Apple ID email) | Check the trace's per-clause results; open Changed Variables on the condition step to see raw `trigger.json` and `trigger.query` |
+| Assist answers but no reply arrives; traces all "finished" | The `+` was stripped: HA native type coercion turns a rendered `+44...` into an integer. Compounded by invisible characters (a zero-width space, U+200B) pasted into the script | Normalise in the rest_command payload (`"+{{ number | string | replace('+', '') }}"`); inspect templates for invisible characters after any web copy/paste |
+| Payload fix "doesn't work" | `rest_command` edits require a reload | Developer Tools → YAML → reload REST commands, or restart |
+| Reply leg fails with no visible error | Payload rendering happens inside `rest_command` and never appears in traces | Settings → System → Logs immediately after a send; rest_command logs non-2xx responses with status codes |
+
+Two diagnostic habits worth keeping. Traces are the ground truth: Settings → Automations & scenes → open the automation or script → Traces shows per-step results and rendered variable values, and the Changed Variables view shows the raw webhook payload verbatim. And deduplicate on `message_handle` if you ever process webhook events statefully — Sendblue may deliver duplicates.
+
+## Security model
+
+The phone number is now a control surface for your house, so three layers apply. The sender allowlist in the conditions is the primary gate — keep it tight, and treat it as convenience-grade, since iMessage sender identity is hard to forge but plain SMS caller ID less so. Exposure (Step 4) is the real blast-radius control: curate the exposed-entities list as if anyone might text the number. The query-string token and high-entropy webhook ID are the transport-level checks; webhook IDs are otherwise unauthenticated, so entropy is the defence. Rotate the token and webhook ID if they ever leak, and keep API keys in `secrets.yaml`, never inline.
+
+## Extensions
+
+Fixed commands can short-circuit the LLM: put a `choose:` block before `conversation.process` that matches `trigger.json.content` against keywords like "status" and replies from a template directly. Swapping `agent_id` to an LLM conversation entity upgrades the whole thing into a natural-language house chatbot with per-sender memory. Inbound `media_url` arrives as a CDN link (expires after roughly 30 days) if you want to route photos anywhere, and outbound `media_url` on the script already supports sending images. For multi-person households, add numbers to `allowed_senders` — each gets an isolated conversation thread automatically.
