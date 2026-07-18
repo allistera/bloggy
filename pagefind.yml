@@ -1,0 +1,11 @@
+# Pagefind index config — runs after `astro build` against dist/
+site: dist
+# Prefer content marked with data-pagefind-body on <main>
+# Exclude chrome and non-content partials
+exclude_selectors:
+  - "[data-pagefind-ignore]"
+  - "nav"
+  - "script"
+  - "style"
+  - "#carousel-lightbox"
+  - "#projects-list"
