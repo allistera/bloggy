@@ -26,6 +26,26 @@ jobs:
       - run: npm ci
       - run: npm run lint
 
+  build:
+    name: Build site + Pagefind
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Production build (Astro + Pagefind)
+        run: npm run build
+        env:
+          # Skip Sentry source-map upload in CI; production still uses Vercel secrets
+          SENTRY_AUTH_TOKEN: ''
+      - name: Verify RSS feed emitted
+        run: test -f dist/rss.xml && head -c 200 dist/rss.xml
+      - name: Verify Pagefind index
+        run: test -d dist/pagefind
+
   test:
     name: Playwright tests
     runs-on: ubuntu-latest

@@ -7,6 +7,10 @@ interface Props {
   description?: string;
   image?: string;
   noindex?: boolean;
+  /** Optional JSON-LD object or array of objects injected as application/ld+json */
+  schema?: Record<string, unknown> | Record<string, unknown>[];
+  /** openGraph type — default website; use article for blog posts */
+  ogType?: string;
 }
 
 const site = Astro.site ?? new URL('https://allisterantosik.com');
@@ -17,11 +21,18 @@ const {
   // Wide social card for OG/Twitter; override per-page when needed
   image = '/og-default.png',
   noindex = false,
+  schema,
+  ogType = 'website',
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, site).href;
 const ogImage = image.startsWith('http') ? image : new URL(image, site).href;
 const isDefaultOg = image === '/og-default.png' || image.endsWith('/og-default.png');
+const schemaList = schema
+  ? Array.isArray(schema)
+    ? schema
+    : [schema]
+  : [];
 ---
 
 <!doctype html>
@@ -41,7 +52,7 @@ const isDefaultOg = image === '/og-default.png' || image.endsWith('/og-default.p
       openGraph={{
         basic: {
           title,
-          type: 'website',
+          type: ogType,
           image: ogImage,
           url: canonical,
         },
@@ -73,6 +84,7 @@ const isDefaultOg = image === '/og-default.png' || image.endsWith('/og-default.p
           { rel: 'icon', type: 'image/png', sizes: '48x48', href: '/favicon-48.png' },
           { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
           { rel: 'manifest', href: '/site.webmanifest' },
+          { rel: 'alternate', type: 'application/rss+xml', href: '/rss.xml', title: 'Allister Antosik RSS' },
         ],
       }}
     />
@@ -84,6 +96,16 @@ const isDefaultOg = image === '/og-default.png' || image.endsWith('/og-default.p
     <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="Allister Antosik RSS"
+      href="/rss.xml"
+    />
+
+    {schemaList.map((entry) => (
+      <script type="application/ld+json" set:html={JSON.stringify(entry)} />
+    ))}
 
     <meta name="htmx-config" content='{"timeout": 3000}' />
     <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>

@@ -1,41 +1,52 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
+import {
+  getPublishedPosts,
+  getRelatedPosts,
+  readingTimeMinutes,
+  type BlogPost,
+} from '../../lib/posts';
+import { blogPostingSchema } from '../../lib/schema';
 
 export async function getStaticPaths() {
-  const allPosts = await getCollection('blog');
-  const now = new Date();
-  
-  // Only generate paths for published, non-draft posts
-  const posts = allPosts.filter(post => {
-    if (post.data.draft) return false;
-    if (new Date(post.data.pubDate) > now) return false;
-    return true;
-  });
+  const posts = await getPublishedPosts();
 
-  return posts.map(post => ({
+  return posts.map((post) => ({
     params: { slug: post.id },
     props: { post },
   }));
 }
 
 interface Props {
-  post: any;
+  post: BlogPost;
 }
 
 const { post } = Astro.props;
 const { Content } = await render(post);
+const readingTime = readingTimeMinutes(post.body);
 
-// Calculate reading time
-const words = (post.body ?? '').split(/\s+/).filter(Boolean).length;
-const readingTime = Math.max(1, Math.ceil(words / 200));
+const published = await getPublishedPosts();
+const related = getRelatedPosts(post, published, 3);
+
+const site = Astro.site ?? new URL('https://allisterantosik.com');
+const postUrl = new URL(`/blog/${post.id}/`, site).href;
+const schema = blogPostingSchema({
+  title: post.data.title,
+  description: post.data.description,
+  url: postUrl,
+  datePublished: post.data.pubDate,
+  tags: post.data.tags,
+});
 ---
 
 <Layout
   title={`${post.data.title} - Allister Antosik`}
   description={post.data.description}
+  ogType="article"
+  schema={schema}
 >
   <Header />
 
@@ -50,7 +61,9 @@ const readingTime = Math.max(1, Math.ceil(words / 200));
     <!-- Article Header -->
     <header class="flex flex-col gap-3 pb-6 border-b border-zinc-800">
       <div class="flex items-center gap-4 text-xs text-zinc-500 font-mono">
-        <span>{new Date(post.data.pubDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+        <time datetime={new Date(post.data.pubDate).toISOString()}>
+          {new Date(post.data.pubDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+        </time>
         <span>•</span>
         <span>{readingTime} min read</span>
       </div>
@@ -72,10 +85,82 @@ const readingTime = Math.max(1, Math.ceil(words / 200));
     <article class="prose prose-invert prose-emerald max-w-none text-zinc-300 leading-relaxed font-sans space-y-6 pt-6">
       <Content />
     </article>
+
+    {related.length > 0 && (
+      <section class="mt-10 pt-8 border-t border-zinc-800 flex flex-col gap-4" data-pagefind-ignore>
+        <h2 class="text-xl font-bold text-zinc-200 font-mono">&gt;_ Related posts</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {related.map((rel) => (
+            <a
+              href={`/blog/${rel.id}`}
+              class="group p-4 rounded bg-zinc-900 border border-zinc-800 hover:border-emerald-500 transition-colors flex flex-col gap-2"
+            >
+              <span class="text-xs text-zinc-500 font-mono">
+                {new Date(rel.data.pubDate).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </span>
+              <span class="text-sm font-bold text-zinc-100 font-mono group-hover:text-emerald-400 transition-colors leading-snug">
+                {rel.data.title}
+              </span>
+              <span class="text-xs text-zinc-500 line-clamp-2">{rel.data.description}</span>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
   </main>
 
   <Footer />
 </Layout>
+
+<script>
+  function enhanceCodeBlocks() {
+    const blocks = document.querySelectorAll<HTMLPreElement>('article pre.astro-code');
+    blocks.forEach((pre) => {
+      if (pre.parentElement?.classList.contains('code-block-wrap')) return;
+
+      const wrap = document.createElement('div');
+      wrap.className = 'code-block-wrap';
+      pre.parentNode?.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'copy-code-btn';
+      btn.setAttribute('aria-label', 'Copy code');
+      btn.textContent = 'Copy';
+
+      btn.addEventListener('click', async () => {
+        const code = pre.querySelector('code')?.textContent ?? pre.textContent ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+          btn.textContent = 'Copied';
+          btn.classList.add('copied');
+          window.setTimeout(() => {
+            btn.textContent = 'Copy';
+            btn.classList.remove('copied');
+          }, 1600);
+        } catch {
+          btn.textContent = 'Failed';
+          window.setTimeout(() => {
+            btn.textContent = 'Copy';
+          }, 1600);
+        }
+      });
+
+      wrap.appendChild(btn);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', enhanceCodeBlocks);
+  } else {
+    enhanceCodeBlocks();
+  }
+</script>
 
 <style is:global>
   /* Markdown content styling overrides */
@@ -113,7 +198,7 @@ const readingTime = Math.max(1, Math.ceil(words / 200));
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 0.875rem;
     line-height: 1.6;
-    margin-bottom: 1.25rem;
+    margin-bottom: 0;
   }
   article pre.astro-code code {
     font-family: inherit;
@@ -131,5 +216,38 @@ const readingTime = Math.max(1, Math.ceil(words / 200));
     padding: 0.125rem 0.25rem;
     border-radius: 0.125rem;
     font-size: 0.875em;
+  }
+
+  .code-block-wrap {
+    position: relative;
+    margin-bottom: 1.25rem;
+  }
+  .copy-code-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 1;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.7rem;
+    line-height: 1;
+    padding: 0.35rem 0.55rem;
+    border-radius: 0.25rem;
+    border: 1px solid rgb(63, 63, 70);
+    background: rgb(24, 24, 27);
+    color: rgb(161, 161, 170);
+    cursor: pointer;
+    opacity: 0.85;
+    transition: color 0.15s, border-color 0.15s, background 0.15s, opacity 0.15s;
+  }
+  .copy-code-btn:hover,
+  .copy-code-btn:focus-visible {
+    opacity: 1;
+    color: rgb(52, 211, 153);
+    border-color: rgb(16, 185, 129);
+    outline: none;
+  }
+  .copy-code-btn.copied {
+    color: rgb(16, 185, 129);
+    border-color: rgb(16, 185, 129);
   }
 </style>

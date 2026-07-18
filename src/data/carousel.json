@@ -1,23 +1,16 @@
 [
   {
-    "id": "chaos-mesh-dashboard",
-    "title": "Chaos Mesh Control Plane",
-    "description": "Real-time telemetry and fault injection dashboard.",
-    "image": "/assets/screenshots/chaos-mesh.png",
-    "link": "https://github.com/example/chaos-mesh-dashboard"
+    "id": "cookie",
+    "title": "Cookie",
+    "description": "A personal, AI-native webmail client — Vue 3 app backed by a Cloudflare Worker that ingests inbound mail into Supabase Postgres, with hybrid keyword-plus-semantic search, automatic AI labeling, spam filtering, summaries, and an 'Ask Cookie' assistant over your mailbox.",
+    "image": "/screenshots/cookie-web.png",
+    "link": "https://github.com/allistera/Cookie-Web"
   },
   {
-    "id": "cost-optimizer-ui",
-    "title": "Cost Optimization Analytics",
-    "description": "Cluster resource utilization and savings analysis recommendations.",
-    "image": "/assets/screenshots/cost-optimizer.png",
-    "link": "https://github.com/example/cost-optimizer-ui"
-  },
-  {
-    "id": "aiops-anomaly-detector",
-    "title": "AIOps Engine Logs",
-    "description": "Anomaly detection visualizer with historical baseline comparisons.",
-    "image": "/assets/screenshots/aiops-detector.png",
-    "link": "https://github.com/example/aiops-anomaly-detector"
+    "id": "mobile-home-dashboard",
+    "title": "Mobile Home Dashboard",
+    "description": "A mobile-first email dashboard for fast triage with powerful search, labels, snoozing, undo send, and customizable theming.",
+    "image": "/screenshots/mobile-dashboard.png",
+    "link": "https://github.com/allistera/mobile-dashboard"
   }
 ]

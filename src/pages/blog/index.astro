@@ -1,34 +1,16 @@
 ---
-import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
+import { getPublishedPosts, readingTimeMinutes } from '../../lib/posts';
 
-// Fetch and filter posts at build time
-const allPosts = await getCollection('blog');
-const now = new Date();
-
-const posts = allPosts
-  .filter(post => {
-    // Exclude drafts
-    if (post.data.draft) return false;
-    // Exclude future-dated posts
-    if (new Date(post.data.pubDate) > now) return false;
-    return true;
-  })
-  .map(post => {
-    // Calculate reading time
-    const words = (post.body ?? '').split(/\s+/).filter(Boolean).length;
-    const readingTime = Math.max(1, Math.ceil(words / 200));
-    return {
-      ...post,
-      readingTime: `${readingTime} min read`
-    };
-  })
-  .sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime());
+const posts = (await getPublishedPosts()).map((post) => ({
+  ...post,
+  readingTime: `${readingTimeMinutes(post.body)} min read`,
+}));
 
 // Collect all unique tags
-const allTags = Array.from(new Set(posts.flatMap(post => post.data.tags)));
+const allTags = Array.from(new Set(posts.flatMap((post) => post.data.tags)));
 ---
 
 <Layout title="Allister Antosik - Lead SRE & AIOps Blog">
@@ -36,12 +18,22 @@ const allTags = Array.from(new Set(posts.flatMap(post => post.data.tags)));
 
   <main class="py-12 flex-1 flex flex-col gap-8 w-full" data-pagefind-body>
     <section class="flex flex-col gap-4">
-      <h1 class="text-4xl font-extrabold tracking-tight text-emerald-400">
-        &gt;_ SRE & AIOps Insights
-      </h1>
-      <p class="text-zinc-400 max-w-2xl leading-relaxed">
-        Deep dives, architectural reviews, and guides on cloud infrastructure reliability, automation, and anomaly detection.
-      </p>
+      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div class="flex flex-col gap-4">
+          <h1 class="text-4xl font-extrabold tracking-tight text-emerald-400">
+            &gt;_ SRE & AIOps Insights
+          </h1>
+          <p class="text-zinc-400 max-w-2xl leading-relaxed">
+            Deep dives, architectural reviews, and guides on cloud infrastructure reliability, automation, and anomaly detection.
+          </p>
+        </div>
+        <a
+          href="/rss.xml"
+          class="text-sm font-mono text-emerald-400 hover:text-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 rounded p-1 self-start sm:self-auto"
+        >
+          RSS feed →
+        </a>
+      </div>
     </section>
 
     <!-- Tag Cloud -->

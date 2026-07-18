@@ -9,6 +9,18 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   site: 'https://allisterantosik.com',
   adapter: vercel(),
+  // Legacy paths from allistera.github.io → new /blog/* routes
+  // (no trailing-slash duplicates — Astro normalizes both forms)
+  redirects: {
+    '/articles/clean-up-your-github-account': '/blog/clean-up-your-github-account',
+    '/articles/mass-uninstall-ios-apps-apple-configurator':
+      '/blog/mass-uninstall-ios-apps-apple-configurator',
+    '/articles/two_way_imessage': '/blog/two-way-imessage',
+    '/articles/two-way-imessage': '/blog/two-way-imessage',
+    '/articles/zero-downtime-kubernetes-deployments':
+      '/blog/zero-downtime-kubernetes-deployments',
+    '/articles': '/blog',
+  },
   // Explicit Shiki syntax highlighting for Markdown + MDX (not Prism)
   markdown: {
     syntaxHighlight: 'shiki',

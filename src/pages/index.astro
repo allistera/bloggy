@@ -1,30 +1,23 @@
 ---
-import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import Carousel from '../components/Carousel.astro';
+import { getPublishedPosts, readingTimeMinutes } from '../lib/posts';
+import { personSchema, websiteSchema } from '../lib/schema';
 
-const now = new Date();
-const latestPosts = (await getCollection('blog'))
-  .filter((post) => {
-    if (post.data.draft) return false;
-    if (new Date(post.data.pubDate) > now) return false;
-    return true;
-  })
-  .map((post) => {
-    const words = (post.body ?? '').split(/\s+/).filter(Boolean).length;
-    const readingTime = Math.max(1, Math.ceil(words / 200));
-    return {
-      ...post,
-      readingTime: `${readingTime} min read`,
-    };
-  })
-  .sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime())
-  .slice(0, 3);
+const latestPosts = (await getPublishedPosts())
+  .slice(0, 3)
+  .map((post) => ({
+    ...post,
+    readingTime: `${readingTimeMinutes(post.body)} min read`,
+  }));
 ---
 
-<Layout title="Allister Antosik - Lead SRE & AIOps Engineer Portfolio">
+<Layout
+  title="Allister Antosik - Lead SRE & AIOps Engineer Portfolio"
+  schema={[websiteSchema(), personSchema]}
+>
   <Header />
 
   <main class="py-12 flex-1 flex flex-col gap-12 w-full" data-pagefind-body>
@@ -36,6 +29,20 @@ const latestPosts = (await getCollection('blog'))
       <p class="text-lg text-zinc-400 max-w-3xl leading-relaxed">
         Leveraging automation, machine learning, and high-performance system engineering to build resilient, self-healing platforms.
       </p>
+      <div class="flex flex-wrap gap-3 pt-1">
+        <a
+          href="mailto:hey@allisterantosik.com"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded bg-emerald-500 text-zinc-950 font-mono text-sm font-bold hover:bg-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        >
+          Get in touch
+        </a>
+        <a
+          href="/blog"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded border border-zinc-700 text-zinc-300 font-mono text-sm hover:border-emerald-500 hover:text-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        >
+          Read the blog
+        </a>
+      </div>
     </section>
 
     <!-- Professional Background Section -->
@@ -215,6 +222,26 @@ const latestPosts = (await getCollection('blog'))
         document.addEventListener('htmx:timeout', showFallback);
       })();
     </script>
+
+    <!-- Contact / hire CTA -->
+    <section
+      class="border-t border-zinc-800 pt-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6"
+      data-pagefind-ignore
+    >
+      <div class="flex flex-col gap-2 max-w-xl">
+        <h2 class="text-2xl font-bold text-zinc-200">&gt;_ Let's work together</h2>
+        <p class="text-zinc-400 leading-relaxed">
+          Open to SRE, platform, and reliability consulting, contract work, and interesting collaborations.
+          Drop a line — I read every message.
+        </p>
+      </div>
+      <a
+        href="mailto:hey@allisterantosik.com?subject=Hello%20from%20allisterantosik.com"
+        class="inline-flex shrink-0 items-center justify-center gap-2 px-5 py-3 rounded bg-emerald-500 text-zinc-950 font-mono text-sm font-bold hover:bg-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      >
+        hey@allisterantosik.com
+      </a>
+    </section>
   </main>
 
   <Footer />

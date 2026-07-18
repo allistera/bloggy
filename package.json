@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@astrojs/mdx": "^7.0.3",
+    "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
     "@astrojs/vercel": "^11.0.3",
     "@sentry/astro": "^10.66.0",
@@ -34,5 +35,8 @@
     "eslint-plugin-astro": "^3.0.1",
     "pagefind": "^1.5.2",
     "typescript": "^6.0.3"
+  },
+  "overrides": {
+    "path-to-regexp": "6.3.0"
   }
 }
