@@ -19,7 +19,8 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
     
     const text = await response.text();
     expect(text).toContain('project-card');
-    expect(text).toContain('automated-chaos-mesh');
+    expect(text).toContain('monzo-mcp');
+    expect(text).toContain('daily-news');
   });
 
   // TC-F2-03: Dynamic Card Swapping
@@ -53,14 +54,12 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
     const firstCard = page.locator('#projects-list .project-card').first();
     await expect(firstCard).toBeVisible();
 
-    await expect(firstCard.locator('h3')).toHaveText('automated-chaos-mesh');
-    await expect(firstCard.locator('p')).toContainText('Kubernetes chaos engineering controller');
+    await expect(firstCard.locator('h3')).toHaveText('monzo-mcp');
+    await expect(firstCard.locator('p')).toContainText("Exposes Monzo's API to MCP clients");
     
     const cardText = await firstCard.textContent();
-    expect(cardText).toContain('Language: Go');
-    expect(cardText).toContain('Stars: 342');
-    expect(cardText).toContain('Forks: 47');
-    expect(cardText).toContain('Updated:');
+    expect(cardText).toContain('Language: TypeScript');
+    expect(cardText).toContain('allistera/monzo-mcp');
   });
 
   // TC-F2-05: Fallback Mock Cards
@@ -74,7 +73,7 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
     const cards = page.locator('#projects-list .project-card');
     await expect(cards.first()).toBeVisible({ timeout: 5000 });
     await expect(cards).toHaveCount(2);
-    await expect(cards.nth(0).locator('h3')).toHaveText('automated-chaos-mesh');
+    await expect(cards.nth(0).locator('h3')).toHaveText('monzo-mcp');
   });
 
   // TC-F2-06: Empty API Response
@@ -132,7 +131,7 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
     const cards = page.locator('#projects-list .project-card');
     await expect(cards.first()).toBeVisible({ timeout: 5000 });
     await expect(cards).toHaveCount(2);
-    await expect(cards.nth(0).locator('h3')).toHaveText('automated-chaos-mesh');
+    await expect(cards.nth(0).locator('h3')).toHaveText('monzo-mcp');
   });
 
   // TC-F2-09: Excessively Long Repository Details
@@ -169,7 +168,7 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
     const cards = page.locator('#projects-list .project-card');
     await expect(cards.first()).toBeVisible({ timeout: 6000 });
     await expect(cards).toHaveCount(2);
-    await expect(cards.nth(0).locator('h3')).toHaveText('automated-chaos-mesh');
+    await expect(cards.nth(0).locator('h3')).toHaveText('monzo-mcp');
   });
 
 });

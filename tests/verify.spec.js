@@ -84,8 +84,8 @@ test.describe('Milestone 1: Astro Project Initialization & Setup Verification', 
     
     const body = await response.text();
     expect(body).toContain('project-card');
-    expect(body).toContain('automated-chaos-mesh');
-    expect(body).toContain('kubernetes-cost-optimizer');
+    expect(body).toContain('monzo-mcp');
+    expect(body).toContain('daily-news');
   });
 
   test('TC-F2-03 & TC-F2-04: Dynamic Card Swapping and Details', async ({ page }) => {
@@ -95,21 +95,19 @@ test.describe('Milestone 1: Astro Project Initialization & Setup Verification', 
     const firstCard = page.locator('#projects-list .project-card').first();
     await expect(firstCard).toBeVisible({ timeout: 10000 });
     
-    // Verify there are exactly two project cards
+    // Live endpoint currently ships multiple real project cards
     const cards = page.locator('#projects-list .project-card');
-    await expect(cards).toHaveCount(2);
+    await expect(cards).toHaveCount(5);
     
     // Verify metadata of first card
     const cardTitle = cards.nth(0).locator('h3');
-    await expect(cardTitle).toHaveText('automated-chaos-mesh');
+    await expect(cardTitle).toHaveText('monzo-mcp');
     const cardDesc = cards.nth(0).locator('p');
-    await expect(cardDesc).toContainText('Kubernetes chaos engineering controller');
+    await expect(cardDesc).toContainText("Exposes Monzo's API to MCP clients");
     
-    // Check specific metadata fields
+    // Check specific metadata fields from current API card shape
     const firstCardText = await cards.nth(0).textContent();
-    expect(firstCardText).toContain('Language: Go');
-    expect(firstCardText).toContain('Stars: 342');
-    expect(firstCardText).toContain('Forks: 47');
-    expect(firstCardText).toContain('Updated:');
+    expect(firstCardText).toContain('Language: TypeScript');
+    expect(firstCardText).toContain('allistera/monzo-mcp');
   });
 });

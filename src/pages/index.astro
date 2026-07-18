@@ -160,33 +160,30 @@ const latestPosts = (await getCollection('blog'))
         const renderFallback = () => {
           const projectsList = document.getElementById('projects-list');
           if (projectsList) {
+            // Offline fallback mirrors first two live projects from /api/projects
             projectsList.innerHTML = `
               <div class="project-card p-6 rounded bg-zinc-900 border border-zinc-800 flex flex-col justify-between gap-4 hover:border-emerald-500 transition-colors">
                 <div class="flex flex-col gap-2">
-                  <h3 class="text-xl font-bold text-zinc-100 font-mono tracking-wide">automated-chaos-mesh</h3>
-                  <p class="text-sm text-zinc-400 leading-relaxed">Kubernetes chaos engineering controller designed to inject faults and verify resiliency of distributed AIOps microservices.</p>
-                </div>
-                <div class="flex flex-wrap items-center justify-between text-xs text-zinc-500 font-mono pt-4 border-t border-zinc-800">
-                  <div class="flex gap-4">
-                    <span>Language: <strong class="text-emerald-400">Go</strong></span>
-                    <span>Stars: <strong class="text-zinc-300">342</strong></span>
-                    <span>Forks: <strong class="text-zinc-300">47</strong></span>
-                  </div>
-                  <span>Updated: 7/10/2026</span>
-                </div>
-              </div>
-              <div class="project-card p-6 rounded bg-zinc-900 border border-zinc-800 flex flex-col justify-between gap-4 hover:border-emerald-500 transition-colors">
-                <div class="flex flex-col gap-2">
-                  <h3 class="text-xl font-bold text-zinc-100 font-mono tracking-wide">kubernetes-cost-optimizer</h3>
-                  <p class="text-sm text-zinc-400 leading-relaxed">An automated resource profiling and rightsizing controller targeting Kubernetes clusters using historical telemetry.</p>
+                  <h3 class="text-xl font-bold text-zinc-100 font-mono tracking-wide">monzo-mcp</h3>
+                  <p class="text-sm text-zinc-400 leading-relaxed">Exposes Monzo's API to MCP clients (Claude Desktop, etc.) over stdio.</p>
                 </div>
                 <div class="flex flex-wrap items-center justify-between text-xs text-zinc-500 font-mono pt-4 border-t border-zinc-800">
                   <div class="flex gap-4">
                     <span>Language: <strong class="text-emerald-400">TypeScript</strong></span>
-                    <span>Stars: <strong class="text-zinc-300">189</strong></span>
-                    <span>Forks: <strong class="text-zinc-300">23</strong></span>
                   </div>
-                  <span>Updated: 7/15/2026</span>
+                  <span><a href="https://github.com/allistera/monzo-mcp" target="_blank" rel="noopener noreferrer" class="text-emerald-400 hover:text-emerald-300">allistera/monzo-mcp</a></span>
+                </div>
+              </div>
+              <div class="project-card p-6 rounded bg-zinc-900 border border-zinc-800 flex flex-col justify-between gap-4 hover:border-emerald-500 transition-colors">
+                <div class="flex flex-col gap-2">
+                  <h3 class="text-xl font-bold text-zinc-100 font-mono tracking-wide">daily-news</h3>
+                  <p class="text-sm text-zinc-400 leading-relaxed">A small Python service that assembles a daily email newsletter from a set of sources and delivers it with Resend.</p>
+                </div>
+                <div class="flex flex-wrap items-center justify-between text-xs text-zinc-500 font-mono pt-4 border-t border-zinc-800">
+                  <div class="flex gap-4">
+                    <span>Language: <strong class="text-emerald-400">Python</strong></span>
+                  </div>
+                  <span><a href="https://github.com/allistera/daily-news" target="_blank" rel="noopener noreferrer" class="text-emerald-400 hover:text-emerald-300">allistera/daily-news</a></span>
                 </div>
               </div>
             `;
