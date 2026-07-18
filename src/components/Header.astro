@@ -19,9 +19,11 @@ import Search from './Search.astro';
     <span class="hidden sm:inline">&gt;_ ALLISTER ANTOSIK</span>
     <span class="sm:hidden" aria-hidden="true">&gt;_ AA</span>
   </a>
-  <div class="flex items-center gap-4 sm:gap-6">
-    <Search />
-    <nav class="flex gap-4 sm:gap-6">
+  <div class="flex flex-1 items-center justify-end gap-3 sm:gap-4 min-w-0">
+    <div class="flex min-w-0 flex-1 justify-end sm:max-w-md lg:max-w-lg">
+      <Search />
+    </div>
+    <nav class="flex shrink-0 gap-3 sm:gap-5">
       <a href="/" class="text-zinc-300 hover:text-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 p-1 rounded">
         Home
       </a>

@@ -8,36 +8,169 @@
 <link rel="stylesheet" href="/pagefind/pagefind-component-ui.css" />
 <script src="/pagefind/pagefind-component-ui.js" type="module"></script>
 
-<!-- Modal UI: trigger opens full search dialog -->
+<!-- Modal UI: wide trigger styled as a search field -->
 <pagefind-modal-trigger
-  class="pagefind-search-trigger inline-flex items-center gap-2 rounded border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 font-mono text-xs text-zinc-400 transition-colors hover:border-emerald-500 hover:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+  class="site-search-trigger"
   data-pagefind-ignore
+  aria-label="Search site"
 >
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5" aria-hidden="true">
-    <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
-  </svg>
-  <span class="hidden sm:inline">Search</span>
-  <kbd class="hidden md:inline rounded border border-zinc-700 bg-zinc-900 px-1 text-[10px] text-zinc-500">⌘K</kbd>
+  <span class="site-search-trigger__inner">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="site-search-trigger__icon" aria-hidden="true">
+      <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+    </svg>
+    <span class="site-search-trigger__placeholder">Search posts &amp; pages…</span>
+    <kbd class="site-search-trigger__kbd">⌘K</kbd>
+  </span>
 </pagefind-modal-trigger>
 <pagefind-modal data-pagefind-ignore></pagefind-modal>
 
 <style is:global>
-  /* Pagefind UI tokens — match zinc / emerald site */
+  /* ── Pagefind Component UI (v1.5+) dark zinc / emerald theme ── */
   :root {
-    --pagefind-ui-scale: 0.95;
-    --pagefind-ui-primary: #34d399;
-    --pagefind-ui-text: #e4e4e7;
-    --pagefind-ui-background: #09090b;
-    --pagefind-ui-border: #27272a;
-    --pagefind-ui-tag: #18181b;
-    --pagefind-ui-border-width: 1px;
-    --pagefind-ui-border-radius: 0.25rem;
-    --pagefind-ui-image-border-radius: 0.25rem;
-    --pagefind-ui-image-box-ratio: 3 / 2;
-    --pagefind-ui-font: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --pf-text: #f4f4f5;
+    --pf-text-secondary: #a1a1aa;
+    --pf-text-muted: #71717a;
+    --pf-background: #09090b;
+    --pf-border: #27272a;
+    --pf-border-focus: #34d399;
+    --pf-skeleton: #18181b;
+    --pf-skeleton-shine: #27272a;
+    --pf-hover: #18181b;
+    --pf-mark: #34d399;
+    --pf-scroll-shadow: rgba(0, 0, 0, 0.45);
+
+    --pf-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+    --pf-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --pf-shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.55);
+
+    --pf-error-bg: #1c1212;
+    --pf-error-border: #7f1d1d;
+    --pf-error-text: #fca5a5;
+    --pf-error-text-secondary: #f87171;
+
+    --pf-outline-focus: #34d399;
+    --pf-outline-width: 2px;
+    --pf-outline-offset: 2px;
+
+    --pf-font: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+    --pf-input-height: 48px;
+    --pf-input-font-size: 15px;
+    --pf-summary-font-size: 12px;
+    --pf-result-title-font-size: 15px;
+    --pf-result-excerpt-font-size: 13px;
+    --pf-modal-backdrop: rgba(9, 9, 11, 0.82);
+
+    --pf-border-radius: 0.25rem;
+    --pf-image-width: 72px;
+    --pf-image-height: 54px;
+
+    /* Longer modal / search panel */
+    --pf-modal-max-width: min(48rem, 94vw);
+    --pf-modal-max-height: min(82dvh, 880px);
+    --pf-modal-top: 8dvh;
+    --pf-searchbox-max-width: min(48rem, 94vw);
+    --pf-searchbox-dropdown-max-height: 420px;
+
+    /* Emerald search icon on dark UI */
+    --pf-icon-search: url("data:image/svg+xml,%3Csvg width='18' height='18' viewBox='0 0 18 18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.7549 11.255H11.9649L11.6849 10.985C12.6649 9.845 13.2549 8.365 13.2549 6.755C13.2549 3.165 10.3449 0.255005 6.75488 0.255005C3.16488 0.255005 0.254883 3.165 0.254883 6.755C0.254883 10.345 3.16488 13.255 6.75488 13.255C8.36488 13.255 9.84488 12.665 10.9849 11.685L11.2549 11.965V12.755L16.2549 17.745L17.7449 16.255L12.7549 11.255ZM6.75488 11.255C4.26488 11.255 2.25488 9.245 2.25488 6.755C2.25488 4.26501 4.26488 2.255 6.75488 2.255C9.24488 2.255 11.2549 4.26501 11.2549 6.755C11.2549 9.245 9.24488 11.255 6.75488 11.255Z' fill='%2334d399'/%3E%3C/svg%3E");
+    --pf-icon-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23a1a1aa' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   }
 
-  pagefind-modal-trigger {
+  /* ── Header trigger: long terminal-style search field ── */
+  .site-search-trigger {
+    display: inline-flex;
     cursor: pointer;
+    min-width: min(18rem, 42vw);
+    width: clamp(11rem, 28vw, 20rem);
+    border: 1px solid #27272a;
+    border-radius: 0.25rem;
+    background: #09090b;
+    color: #a1a1aa;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    transition:
+      border-color 0.15s ease,
+      color 0.15s ease,
+      box-shadow 0.15s ease,
+      background-color 0.15s ease;
+  }
+
+  .site-search-trigger:hover,
+  .site-search-trigger:focus-visible {
+    border-color: #34d399;
+    color: #d4d4d8;
+    background: #0c0c0e;
+    box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.25);
+    outline: none;
+  }
+
+  .site-search-trigger__inner {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.55rem 0.75rem;
+  }
+
+  .site-search-trigger__icon {
+    width: 0.95rem;
+    height: 0.95rem;
+    flex-shrink: 0;
+    color: #34d399;
+  }
+
+  .site-search-trigger__placeholder {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.75rem;
+    letter-spacing: 0.01em;
+    text-align: left;
+  }
+
+  .site-search-trigger__placeholder::before {
+    content: ">_ ";
+    color: #34d399;
+    opacity: 0.85;
+  }
+
+  .site-search-trigger__kbd {
+    flex-shrink: 0;
+    display: none;
+    border: 1px solid #3f3f46;
+    border-radius: 0.2rem;
+    background: #18181b;
+    padding: 0.1rem 0.35rem;
+    font-size: 0.65rem;
+    line-height: 1.2;
+    color: #71717a;
+  }
+
+  @media (min-width: 640px) {
+    .site-search-trigger {
+      min-width: 16rem;
+      width: clamp(16rem, 26vw, 22rem);
+    }
+
+    .site-search-trigger__placeholder {
+      font-size: 0.8rem;
+    }
+
+    .site-search-trigger__kbd {
+      display: inline-block;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .site-search-trigger {
+      width: clamp(18rem, 24vw, 24rem);
+    }
+  }
+
+  /* Modal panel polish */
+  pagefind-modal {
+    font-family: var(--pf-font);
   }
 </style>
