@@ -25,14 +25,44 @@ const projects = [
     url: 'https://github.com/allistera/pyscrypt-manager',
     language: 'Python',
   },
+  {
+    name: 'github-smash',
+    description:
+      'Fed up of having hundreds of GitHub repositories from crazy experiments and side projects that went no where? This GitHub Action will delete all your repositories in one go, leaving only the ones you want to keep.\n\n It can also delete forks, archived repos, and repos with a certain prefix or suffix',
+    url: 'https://github.com/allistera/github-smash',
+    language: 'Github Action, YAML',
+  },
+  {
+    name: 'Bookmark-AI',
+    description:
+      'A Chrome extension that uses AI to automatically save, categorize and organize your bookmarks into a your own hierarchical folder structure.\n\nIt also  provides Self-Healing Health Checks: Scan, identify, and bulk-resolve dead links, redirects, changed page titles, stale content, and offline domains. \n\nYou can find it on the Chrome Web Store here: https://chrome.google.com/webstore/detail/bookmark-ai/ogjljfclgkldjljjkljkljkljkljklj',
+    url: 'https://github.com/allistera/bookmark-ai',
+    language: 'Github Action, YAML',
+  },
 ];
 
-/** Turn author-friendly <br> / \n into display newlines (escaped as text, not HTML). */
-function formatDescription(text: string): string {
-  return text
+/**
+ * Escape HTML, turn <br>/newlines into <br />, and linkify bare http(s) URLs.
+ * Safe for set:html because content is escaped before tags are injected.
+ */
+function formatDescriptionHtml(text: string): string {
+  const normalized = text
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/\r\n/g, '\n')
     .trim();
+
+  const escaped = normalized
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
+  const withLinks = escaped.replace(
+    /(https?:\/\/[^\s<&]+)/g,
+    '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-emerald-400 hover:text-emerald-300 underline underline-offset-2 break-all">$1</a>',
+  );
+
+  return withLinks.replace(/\n/g, '<br />');
 }
 ---
 
@@ -40,9 +70,10 @@ function formatDescription(text: string): string {
   <div class="project-card p-6 rounded bg-zinc-900 border border-zinc-800 flex flex-col justify-between gap-4 hover:border-emerald-500 transition-colors">
     <div class="flex flex-col gap-2">
       <h3 class="text-xl font-bold text-zinc-100 font-mono tracking-wide">{project.name}</h3>
-      <p class="text-sm text-zinc-400 leading-relaxed whitespace-pre-line">
-        {formatDescription(project.description)}
-      </p>
+      <p
+        class="text-sm text-zinc-400 leading-relaxed"
+        set:html={formatDescriptionHtml(project.description)}
+      />
     </div>
 
     <div class="flex flex-wrap items-center justify-between text-xs text-zinc-500 font-mono pt-4 border-t border-zinc-800">
