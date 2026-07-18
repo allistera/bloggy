@@ -10,7 +10,15 @@ test.describe('Feature 3: Interactive Screenshot Carousel (R3) - Tier 1 & Tier 2
 
   test.beforeEach(async ({ page }) => {
     // Intercept all screenshot image requests to return a dummy 1x1 transparent PNG
-    await page.route('**/assets/screenshots/**/*.png', route => {
+    await page.route('**/screenshots/**/*.{png,jpg,jpeg,webp}', route => {
+      const pngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+      route.fulfill({
+        status: 200,
+        contentType: 'image/png',
+        body: Buffer.from(pngBase64, 'base64')
+      });
+    });
+    await page.route('**/assets/screenshots/**/*.{png,jpg,jpeg,webp}', route => {
       const pngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
       route.fulfill({
         status: 200,
@@ -248,6 +256,23 @@ test.describe('Feature 3: Interactive Screenshot Carousel (R3) - Tier 1 & Tier 2
     }
 
     await missingLinkPage.close();
+  });
+
+  // TC-F3-11: Screenshot opens in lightbox popup
+  test('TC-F3-11: Screenshot lightbox popup', async ({ page }) => {
+    const container = page.locator('#carousel-container');
+    const lightbox = page.locator('#carousel-lightbox');
+    const imageBtn = container.locator('.carousel-slide.active .carousel-image-btn');
+
+    await expect(lightbox).toBeHidden();
+    await imageBtn.click();
+
+    await expect(lightbox).toBeVisible();
+    await expect(lightbox.locator('#carousel-lightbox-title')).toHaveText(mockCarouselData[0].title);
+    await expect(lightbox.locator('#carousel-lightbox-image')).toHaveAttribute('src', mockCarouselData[0].image);
+
+    await page.keyboard.press('Escape');
+    await expect(lightbox).toBeHidden();
   });
 
 });
