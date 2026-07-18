@@ -1,41 +1,64 @@
 ---
 export const partial = true;
 
-// Mock SRE project data for M1 setup
+// Project cards loaded via HTMX on the homepage.
+// Line breaks in description: use \n or <br> — both render as new lines.
 const projects = [
   {
-    name: 'automated-chaos-mesh',
-    description: 'Kubernetes chaos engineering controller designed to inject faults and verify resiliency of distributed AIOps microservices.',
-    stars: 342,
-    forks: 47,
-    language: 'Go',
-    updatedAt: '2026-07-10T14:30:00Z'
+    name: 'monzo-mcp',
+    description:
+      "Exposes Monzo's API to MCP clients (Claude Desktop, etc.) over stdio. Authenticates via OAuth 2.0 and persists refresh tokens locally so the server can renew access tokens automatically.\n\nThis can run in either read only (default) or write mode, allowing users to List transactions or Move money into or out of a pot (deposit / withdraw).",
+    url: 'https://github.com/allistera/monzo-mcp',
+    language: 'TypeScript',
   },
   {
-    name: 'kubernetes-cost-optimizer',
-    description: 'An automated resource profiling and rightsizing controller targeting Kubernetes clusters using historical telemetry.',
-    stars: 189,
-    forks: 23,
-    language: 'TypeScript',
-    updatedAt: '2026-07-15T09:15:00Z'
-  }
+    name: 'daily-news',
+    description:
+      "A small Python service that assembles a daily email newsletter from a set of sources and delivers it with Resend. It runs every morning via GitHub Actions (and can be triggered manually).\n\nEach source returns the previous day's top items, the items are rendered into a Hacker-News-style HTML template, and the result is emailed.",
+    url: 'https://github.com/allistera/daily-news',
+    language: 'Python',
+  },
+  {
+    name: 'pyscrypt-manager',
+    description:
+      'A sleek, modern Home Assistant user interface and custom Lovelace card to manage, list, configure, and execute pyScripts on Home Assistant natively.',
+    url: 'https://github.com/allistera/pyscrypt-manager',
+    language: 'Python',
+  },
 ];
+
+/** Turn author-friendly <br> / \n into display newlines (escaped as text, not HTML). */
+function formatDescription(text: string): string {
+  return text
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/\r\n/g, '\n')
+    .trim();
+}
 ---
 
-{projects.map(project => (
+{projects.map((project) => (
   <div class="project-card p-6 rounded bg-zinc-900 border border-zinc-800 flex flex-col justify-between gap-4 hover:border-emerald-500 transition-colors">
     <div class="flex flex-col gap-2">
       <h3 class="text-xl font-bold text-zinc-100 font-mono tracking-wide">{project.name}</h3>
-      <p class="text-sm text-zinc-400 leading-relaxed">{project.description}</p>
+      <p class="text-sm text-zinc-400 leading-relaxed whitespace-pre-line">
+        {formatDescription(project.description)}
+      </p>
     </div>
-    
+
     <div class="flex flex-wrap items-center justify-between text-xs text-zinc-500 font-mono pt-4 border-t border-zinc-800">
       <div class="flex gap-4">
         <span>Language: <strong class="text-emerald-400">{project.language}</strong></span>
-        <span>Stars: <strong class="text-zinc-300">{project.stars}</strong></span>
-        <span>Forks: <strong class="text-zinc-300">{project.forks}</strong></span>
       </div>
-      <span>Updated: {new Date(project.updatedAt).toLocaleDateString()}</span>
+      <span>
+        <a
+          href={project.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-emerald-400 hover:text-emerald-300"
+        >
+          allistera/{project.name}
+        </a>
+      </span>
     </div>
   </div>
 ))}
