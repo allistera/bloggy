@@ -3,14 +3,14 @@
     "id": "cookie",
     "title": "Cookie",
     "description": "A personal, AI-native webmail client — Vue 3 app backed by a Cloudflare Worker that ingests inbound mail into Supabase Postgres, with hybrid keyword-plus-semantic search, automatic AI labeling, spam filtering, summaries, and an 'Ask Cookie' assistant over your mailbox.",
-    "image": "/screenshots/cookie-web.png",
+    "images": ["/screenshots/cookie-web.png"],
     "link": "https://github.com/allistera/Cookie-Web"
   },
   {
     "id": "mobile-home-dashboard",
     "title": "Mobile Home Dashboard",
     "description": "A mobile-first email dashboard for fast triage with powerful search, labels, snoozing, undo send, and customizable theming.",
-    "image": "/screenshots/mobile-dashboard.png",
+    "images": ["/screenshots/mobile-dashboard.png"],
     "link": "https://github.com/allistera/mobile-dashboard"
   }
 ]

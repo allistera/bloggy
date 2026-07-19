@@ -113,7 +113,8 @@ import staticData from '../data/carousel.json';
     if (!container || !slidesContainer || !lightbox || !lightboxImage) return;
 
     let currentIndex = 0;
-    let lightboxIndex = 0;
+    let lightboxProjectIndex = 0;
+    let lightboxImageIndex = 0;
     let lightboxOpen = false;
 
     const track = (name, attributes = {}) => {
@@ -130,17 +131,25 @@ import staticData from '../data/carousel.json';
       }
     };
 
-    const openLightbox = (index) => {
+    const getImages = (item) => {
+      if (Array.isArray(item.images) && item.images.length > 0) return item.images;
+      return item.image ? [item.image] : [];
+    };
+
+    const openLightbox = (projectIndex, imageIndex = 0) => {
       if (!data || data.length === 0) return;
-      lightboxIndex = (index + data.length) % data.length;
-      const item = data[lightboxIndex];
+      lightboxProjectIndex = (projectIndex + data.length) % data.length;
+      const item = data[lightboxProjectIndex];
+      const images = getImages(item);
+      if (images.length === 0) return;
+      lightboxImageIndex = (imageIndex + images.length) % images.length;
 
-      lightboxImage.src = item.image;
-      lightboxImage.alt = item.title;
+      lightboxImage.src = images[lightboxImageIndex];
+      lightboxImage.alt = `${item.title} screenshot ${lightboxImageIndex + 1}`;
       if (lightboxTitle) lightboxTitle.textContent = item.title;
-      if (lightboxCaption) lightboxCaption.textContent = item.description || '';
+      if (lightboxCaption) lightboxCaption.textContent = `${lightboxImageIndex + 1} of ${images.length} - ${item.description || ''}`;
 
-      const multi = data.length > 1;
+      const multi = images.length > 1;
       if (lightboxPrev) lightboxPrev.style.visibility = multi ? 'visible' : 'hidden';
       if (lightboxNext) lightboxNext.style.visibility = multi ? 'visible' : 'hidden';
 
@@ -151,7 +160,7 @@ import staticData from '../data/carousel.json';
       document.body.style.overflow = 'hidden';
       lightboxClose?.focus();
 
-      track('carousel.lightbox.open', { id: item.id || String(lightboxIndex) });
+      track('carousel.lightbox.open', { id: item.id || String(lightboxProjectIndex), image: lightboxImageIndex + 1 });
     };
 
     const closeLightbox = () => {
@@ -166,8 +175,31 @@ import staticData from '../data/carousel.json';
     };
 
     const stepLightbox = (delta) => {
-      if (!data || data.length <= 1) return;
-      openLightbox(lightboxIndex + delta);
+      if (!data) return;
+      const images = getImages(data[lightboxProjectIndex]);
+      if (images.length <= 1) return;
+      openLightbox(lightboxProjectIndex, lightboxImageIndex + delta);
+    };
+
+    const changeProjectImage = (projectIndex, delta) => {
+      const item = data?.[projectIndex];
+      const images = item ? getImages(item) : [];
+      if (images.length <= 1) return;
+
+      const slide = slidesContainer.querySelector(`.carousel-slide[data-index="${projectIndex}"]`);
+      if (!slide) return;
+      const image = slide.querySelector('.carousel-image');
+      const imageButton = slide.querySelector('.carousel-image-btn');
+      const counter = slide.querySelector('.carousel-image-counter');
+      const current = parseInt(imageButton?.getAttribute('data-image-index') || '0', 10);
+      const next = (current + delta + images.length) % images.length;
+
+      if (image) {
+        image.src = images[next];
+        image.alt = `${item.title} screenshot ${next + 1}`;
+      }
+      imageButton?.setAttribute('data-image-index', String(next));
+      if (counter) counter.textContent = `${next + 1} / ${images.length}`;
     };
 
     const initCarousel = (carouselItems) => {
@@ -186,6 +218,9 @@ import staticData from '../data/carousel.json';
       }
 
       slidesContainer.innerHTML = carouselItems.map((item, index) => {
+        const images = getImages(item);
+        const image = images[0] || '';
+        const hasMultipleImages = images.length > 1;
         const hasLink = item.link && item.link.trim() !== '';
         const linkHtml = hasLink
           ? `<a href="${item.link}" target="_blank" rel="noopener noreferrer" class="carousel-link inline-block px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-bold font-mono text-xs rounded transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400">View Repository</a>`
@@ -193,23 +228,29 @@ import staticData from '../data/carousel.json';
 
         return `
           <div class="carousel-slide ${index === currentIndex ? 'active' : 'hidden'} flex flex-col md:flex-row gap-6 items-center w-full" data-index="${index}">
-            <div class="w-full md:w-1/2 flex justify-center">
+            <div class="w-full md:w-1/2 flex flex-col justify-center">
               <button
                 type="button"
                 class="carousel-image-btn group relative max-w-full rounded border border-zinc-800 bg-zinc-950 p-0 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                data-lightbox-index="${index}"
+                data-project-index="${index}"
+                data-image-index="0"
                 aria-label="Open screenshot: ${item.title}"
               >
                 <img
                   class="carousel-image max-h-56 w-full rounded object-cover transition group-hover:opacity-90"
-                  src="${item.image}"
-                  alt="${item.title}"
+                  src="${image}"
+                  alt="${item.title} screenshot 1"
                   onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22200%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%2318181b%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23ff3333%22 font-family=%22monospace%22 font-size=%2214%22>Image Load Failure</text></svg>'"
                 />
                 <span class="pointer-events-none absolute inset-x-0 bottom-0 bg-zinc-950/80 py-1 text-center font-mono text-[10px] text-emerald-400 opacity-0 transition group-hover:opacity-100">
                   Click to expand
                 </span>
               </button>
+              <div class="carousel-image-controls mt-3 flex items-center justify-center gap-3 ${hasMultipleImages ? '' : 'hidden'}" aria-label="${item.title} screenshots">
+                <button type="button" class="carousel-image-prev rounded border border-zinc-800 bg-zinc-900 px-2 py-1 font-mono text-xs text-zinc-400 hover:text-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500" data-project-index="${index}" aria-label="Previous ${item.title} screenshot">&lt; Prev image</button>
+                <span class="carousel-image-counter font-mono text-xs text-zinc-500" aria-live="polite">1 / ${images.length}</span>
+                <button type="button" class="carousel-image-next rounded border border-zinc-800 bg-zinc-900 px-2 py-1 font-mono text-xs text-zinc-400 hover:text-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500" data-project-index="${index}" aria-label="Next ${item.title} screenshot">Next image &gt;</button>
+              </div>
             </div>
             <div class="w-full md:w-1/2 flex flex-col gap-4">
               <h3 class="carousel-title text-xl font-bold text-zinc-100 font-mono tracking-wide">${item.title}</h3>
@@ -225,8 +266,16 @@ import staticData from '../data/carousel.json';
       // Open lightbox when a screenshot is clicked
       slidesContainer.querySelectorAll('.carousel-image-btn').forEach((btn) => {
         btn.addEventListener('click', () => {
-          const idx = parseInt(btn.getAttribute('data-lightbox-index') || '0', 10);
-          openLightbox(idx);
+          const projectIndex = parseInt(btn.getAttribute('data-project-index') || '0', 10);
+          const imageIndex = parseInt(btn.getAttribute('data-image-index') || '0', 10);
+          openLightbox(projectIndex, imageIndex);
+        });
+      });
+
+      slidesContainer.querySelectorAll('.carousel-image-prev, .carousel-image-next').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const projectIndex = parseInt(btn.getAttribute('data-project-index') || '0', 10);
+          changeProjectImage(projectIndex, btn.classList.contains('carousel-image-next') ? 1 : -1);
         });
       });
 

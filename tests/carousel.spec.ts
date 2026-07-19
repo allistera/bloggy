@@ -54,7 +54,7 @@ test.describe('Feature 3: Interactive Screenshot Carousel (R3) - Tier 1 & Tier 2
     await expect(activeSlide).toBeVisible();
     await expect(activeSlide.locator('.carousel-title')).toHaveText(mockCarouselData[0].title);
     await expect(activeSlide.locator('.carousel-description')).toHaveText(mockCarouselData[0].description);
-    await expect(activeSlide.locator('.carousel-image')).toHaveAttribute('src', mockCarouselData[0].image);
+    await expect(activeSlide.locator('.carousel-image')).toHaveAttribute('src', mockCarouselData[0].images[0]);
   });
 
   // TC-F3-02: Next Button Navigation
@@ -269,10 +269,29 @@ test.describe('Feature 3: Interactive Screenshot Carousel (R3) - Tier 1 & Tier 2
 
     await expect(lightbox).toBeVisible();
     await expect(lightbox.locator('#carousel-lightbox-title')).toHaveText(mockCarouselData[0].title);
-    await expect(lightbox.locator('#carousel-lightbox-image')).toHaveAttribute('src', mockCarouselData[0].image);
+    await expect(lightbox.locator('#carousel-lightbox-image')).toHaveAttribute('src', mockCarouselData[0].images[0]);
 
     await page.keyboard.press('Escape');
     await expect(lightbox).toBeHidden();
+  });
+
+  // TC-F3-12: A project can navigate between its own screenshots
+  test('TC-F3-12: Multiple screenshots per project', async ({ page }) => {
+    const activeSlide = page.locator('#carousel-container .carousel-slide.active');
+    const image = activeSlide.locator('.carousel-image');
+
+    await expect(activeSlide.locator('.carousel-image-controls')).toBeVisible();
+    await expect(activeSlide.locator('.carousel-image-counter')).toHaveText('1 / 2');
+
+    await activeSlide.locator('.carousel-image-next').click();
+    await expect(image).toHaveAttribute('src', mockCarouselData[0].images[1]);
+    await expect(activeSlide.locator('.carousel-image-counter')).toHaveText('2 / 2');
+
+    await activeSlide.locator('.carousel-image-btn').click();
+    await expect(page.locator('#carousel-lightbox-image')).toHaveAttribute('src', mockCarouselData[0].images[1]);
+
+    await page.locator('#carousel-lightbox-next').click();
+    await expect(page.locator('#carousel-lightbox-image')).toHaveAttribute('src', mockCarouselData[0].images[0]);
   });
 
 });

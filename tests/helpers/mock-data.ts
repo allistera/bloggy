@@ -9,7 +9,7 @@ export interface CarouselItem {
   id: string;
   title: string;
   description: string;
-  image: string;
+  images: string[];
   link?: string;
 }
 
@@ -46,21 +46,24 @@ export const mockCarouselData: CarouselItem[] = [
     id: 'chaos-mesh-dashboard',
     title: 'Chaos Mesh Control Plane',
     description: 'Real-time telemetry and fault injection dashboard.',
-    image: '/assets/screenshots/chaos-mesh.png',
+    images: [
+      '/assets/screenshots/chaos-mesh.png',
+      '/assets/screenshots/chaos-mesh-detail.png',
+    ],
     link: 'https://github.com/example/chaos-mesh-dashboard',
   },
   {
     id: 'cost-optimizer-ui',
     title: 'Cost Optimization Analytics',
     description: 'Cluster resource utilization and savings analysis recommendations.',
-    image: '/assets/screenshots/cost-optimizer.png',
+    images: ['/assets/screenshots/cost-optimizer.png'],
     link: 'https://github.com/example/cost-optimizer-ui',
   },
   {
     id: 'aiops-anomaly-detector',
     title: 'AIOps Engine Logs',
     description: 'Anomaly detection visualizer with historical baseline comparisons.',
-    image: '/assets/screenshots/aiops-detector.png',
+    images: ['/assets/screenshots/aiops-detector.png'],
     link: 'https://github.com/example/aiops-anomaly-detector',
   },
 ];
@@ -70,7 +73,7 @@ export const singleCarouselItem: CarouselItem[] = [
     id: 'single-project',
     title: 'Single Project Showcase',
     description: 'Statically configured single item carousel for boundary testing.',
-    image: '/assets/screenshots/single.png',
+    images: ['/assets/screenshots/single.png'],
     link: 'https://github.com/example/single',
   },
 ];
@@ -80,7 +83,7 @@ export const brokenImageCarousel: CarouselItem[] = [
     id: 'broken-img-project',
     title: 'Broken Image Project',
     description: 'Project slide testing broken image fallback scenarios.',
-    image: '/assets/screenshots/non-existent-image-path.png',
+    images: ['/assets/screenshots/non-existent-image-path.png'],
     link: 'https://github.com/example/broken-img',
   },
 ];
@@ -90,7 +93,7 @@ export const missingLinkCarousel: CarouselItem[] = [
     id: 'no-link-project',
     title: 'No External Link Project',
     description: 'This project does not have a GitHub repository link provided.',
-    image: '/assets/screenshots/no-link.png',
+    images: ['/assets/screenshots/no-link.png'],
   },
 ];
 
