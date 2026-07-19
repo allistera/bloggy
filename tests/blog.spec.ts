@@ -19,6 +19,7 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
     await expect(page.locator('text=Clean Up Your GitHub Account')).toBeVisible();
     await expect(page.locator('text=Mass Uninstall iOS Apps with Apple Configurator on Mac')).toBeVisible();
     await expect(page.locator('text=Zero-Downtime Deployments with Kubernetes Rolling Updates')).toBeVisible();
+    await expect(page.locator('text=Installing OpenClaw on Unraid')).toBeVisible();
   });
 
   // TC-F4-02: Blog Post Metadata
@@ -146,6 +147,17 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
     const heading = page.locator('main h1').first();
     await expect(heading).toBeVisible();
     await expect(heading).toContainText('Clean Up Your GitHub Account');
+  });
+
+  // TC-F4-11: OpenClaw on Unraid article renders structured installation steps
+  test('TC-F4-11: OpenClaw on Unraid article', async ({ page }) => {
+    await page.goto('/blog/installing-openclaw-on-unraid');
+
+    const article = page.locator('article');
+    await expect(page.locator('main h1').first()).toHaveText('Installing OpenClaw on Unraid');
+    await expect(article.locator('h2', { hasText: 'Create the Docker Compose file' })).toBeVisible();
+    await expect(article.locator('pre').filter({ hasText: 'openclaw-gateway:' }).first()).toBeVisible();
+    await expect(article.locator('text=Security recommendations')).toBeVisible();
   });
 
 

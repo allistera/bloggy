@@ -1,0 +1,402 @@
+---
+title: "Installing OpenClaw on Unraid"
+description: "Deploy OpenClaw on Unraid with Docker Compose, persistent state, a token-protected Control UI, a CLI companion, and a security-first configuration."
+pubDate: 2026-07-19
+tags: ["OpenClaw", "Unraid", "Docker", "Self-Hosting"]
+draft: false
+---
+
+This guide installs OpenClaw on Unraid using the official `openclaw/openclaw:latest` Docker Hub image. It gives you the built-in browser UI on port `18789`, persistent configuration and authentication data under `/mnt/user/appdata/openclaw`, a separate CLI service for administration, and token-protected access.
+
+The setup deliberately does **not** mount the host filesystem, Docker socket, or a privileged container. OpenClaw publishes official images on GHCR and Docker Hub; use `openclaw/openclaw` rather than an unofficial mirror. Its built-in Control UI covers chat, agent management, configuration, and execution approvals, so a separate frontend such as Open WebUI is unnecessary.
+
+## 1. Install Docker Compose support
+
+Unraid does not provide native Docker Compose stack management. The simplest option is **Compose Manager Plus**, available through Community Applications.
+
+1. Open **Apps** in Unraid.
+2. Search for **Compose Manager Plus**.
+3. Install the plugin.
+4. Confirm Docker Compose is available in the Unraid terminal:
+
+```bash
+docker compose version
+```
+
+You can manage the completed stack through Compose Manager Plus or directly from the terminal.
+
+## 2. Create persistent directories
+
+In the Unraid terminal, create OpenClaw's persistent directories and set the required permissions:
+
+```bash
+mkdir -p /mnt/user/appdata/openclaw/config/workspace
+mkdir -p /mnt/user/appdata/openclaw/auth-profile-secrets
+chown -R 1000:1000 /mnt/user/appdata/openclaw
+chmod 700 /mnt/user/appdata/openclaw/auth-profile-secrets
+```
+
+The official image runs as the `node` user with UID `1000`, so its mounted directories must be writable by that UID. The resulting layout is:
+
+```text
+/mnt/user/appdata/openclaw/
+├── .env
+├── compose.yml
+├── config/
+│   ├── openclaw.json
+│   ├── agents/
+│   └── workspace/
+└── auth-profile-secrets/
+```
+
+OpenClaw stores its configuration, agent authentication profiles, workspace, and OAuth encryption key in these locations.
+
+## 3. Generate the Gateway token
+
+Generate a random token and write it to an environment file:
+
+```bash
+TOKEN="$(openssl rand -hex 32)"
+cat > /mnt/user/appdata/openclaw/.env <<EOF
+OPENCLAW_GATEWAY_TOKEN=${TOKEN}
+OPENCLAW_TZ=Europe/London
+EOF
+chown 1000:1000 /mnt/user/appdata/openclaw/.env
+chmod 600 /mnt/user/appdata/openclaw/.env
+```
+
+Retrieve the token when needed:
+
+```bash
+grep '^OPENCLAW_GATEWAY_TOKEN=' /mnt/user/appdata/openclaw/.env | cut -d= -f2-
+```
+
+Keep this token private: it grants administrative access to OpenClaw.
+
+## 4. Create the Docker Compose file
+
+Create `/mnt/user/appdata/openclaw/compose.yml` with the following content:
+
+```yaml
+name: openclaw
+
+services:
+  openclaw-gateway:
+    image: openclaw/openclaw:latest
+    container_name: openclaw
+    restart: unless-stopped
+    init: true
+    env_file:
+      - /mnt/user/appdata/openclaw/.env
+    environment:
+      HOME: /home/node
+      OPENCLAW_HOME: /home/node
+      TERM: xterm-256color
+      TZ: Europe/London
+      OPENCLAW_STATE_DIR: /home/node/.openclaw
+      OPENCLAW_CONFIG_PATH: /home/node/.openclaw/openclaw.json
+      OPENCLAW_CONFIG_DIR: /home/node/.openclaw
+      OPENCLAW_WORKSPACE_DIR: /home/node/.openclaw/workspace
+      # Docker bridge networking does not reliably carry mDNS.
+      OPENCLAW_DISABLE_BONJOUR: "1"
+    command:
+      - node
+      - dist/index.js
+      - gateway
+      - --bind
+      - lan
+      - --port
+      - "18789"
+    ports:
+      - "18789:18789"
+    volumes:
+      - /mnt/user/appdata/openclaw/config:/home/node/.openclaw
+      - /mnt/user/appdata/openclaw/config/workspace:/home/node/.openclaw/workspace
+      - /mnt/user/appdata/openclaw/auth-profile-secrets:/home/node/.config/openclaw
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    cap_drop:
+      - NET_RAW
+      - NET_ADMIN
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - >
+          fetch('http://127.0.0.1:18789/healthz')
+          .then((response) => process.exit(response.ok ? 0 : 1))
+          .catch(() => process.exit(1))
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  openclaw-cli:
+    image: openclaw/openclaw:latest
+    profiles:
+      - cli
+    network_mode: "service:openclaw-gateway"
+    env_file:
+      - /mnt/user/appdata/openclaw/.env
+    environment:
+      HOME: /home/node
+      OPENCLAW_HOME: /home/node
+      TERM: xterm-256color
+      TZ: Europe/London
+      OPENCLAW_STATE_DIR: /home/node/.openclaw
+      OPENCLAW_CONFIG_PATH: /home/node/.openclaw/openclaw.json
+      OPENCLAW_CONFIG_DIR: /home/node/.openclaw
+      OPENCLAW_WORKSPACE_DIR: /home/node/.openclaw/workspace
+      BROWSER: echo
+    volumes:
+      - /mnt/user/appdata/openclaw/config:/home/node/.openclaw
+      - /mnt/user/appdata/openclaw/config/workspace:/home/node/.openclaw/workspace
+      - /mnt/user/appdata/openclaw/auth-profile-secrets:/home/node/.config/openclaw
+    cap_drop:
+      - NET_RAW
+      - NET_ADMIN
+    security_opt:
+      - no-new-privileges:true
+    stdin_open: true
+    tty: true
+    init: true
+    entrypoint:
+      - node
+      - dist/index.js
+    depends_on:
+      - openclaw-gateway
+```
+
+This follows the official OpenClaw Compose arrangement: a Gateway container plus a CLI service that shares its network and persistent directories. Only port `18789` is published; the separate bridge port is not required for basic dashboard and WebChat use.
+
+## 5. Pull the image
+
+```bash
+cd /mnt/user/appdata/openclaw
+docker compose pull
+docker image inspect openclaw/openclaw:latest --format '{{.RepoTags}}'
+```
+
+## 6. Run the onboarding wizard
+
+Before running the Gateway permanently, complete OpenClaw's interactive onboarding:
+
+```bash
+cd /mnt/user/appdata/openclaw
+docker compose run --rm --no-deps --entrypoint node openclaw-gateway \
+  dist/index.js onboard --mode local --no-install-daemon
+```
+
+During onboarding:
+
+- Select your model provider.
+- Enter its API key or complete its supported authentication flow.
+- Choose a default model.
+- Create the main agent and workspace.
+- Skip messaging channels initially.
+- Skip daemon installation because Docker handles startup.
+
+The onboarding process configures the provider, authentication, Gateway, and initial agent. A standard provider API key is generally the least complicated authentication method in Docker.
+
+## 7. Allow the Unraid UI address
+
+OpenClaw checks the browser origin accessing its Control UI. Set your actual Unraid IP address and hostname before applying the configuration:
+
+```bash
+UNRAID_IP="192.168.1.50"
+UNRAID_HOST="orion"
+```
+
+Replace these values as necessary, then run:
+
+```bash
+docker compose run --rm --no-deps --entrypoint node openclaw-gateway \
+  dist/index.js config set --batch-json "[
+  {\"path\":\"gateway.mode\",\"value\":\"local\"},
+  {\"path\":\"gateway.bind\",\"value\":\"lan\"},
+  {\"path\":\"gateway.controlUi.allowedOrigins\",\"value\":[
+    \"http://${UNRAID_IP}:18789\",
+    \"http://${UNRAID_HOST}:18789\",
+    \"http://localhost:18789\",
+    \"http://127.0.0.1:18789\"
+  ]}
+]"
+```
+
+Inspect the generated configuration if needed:
+
+```bash
+cat /mnt/user/appdata/openclaw/config/openclaw.json
+```
+
+This sets the Gateway to local mode, binds it to the LAN interface, and explicitly lists the Control UI origins.
+
+## 8. Start OpenClaw
+
+```bash
+cd /mnt/user/appdata/openclaw
+docker compose up -d openclaw-gateway
+docker compose ps
+docker compose logs -f openclaw-gateway
+```
+
+Use <kbd>Ctrl</kbd> + <kbd>C</kbd> to leave the log view; the container continues running. Test the health endpoint:
+
+```bash
+curl http://127.0.0.1:18789/healthz
+```
+
+## 9. Open the browser UI
+
+Open `http://192.168.1.50:18789`, or `http://orion:18789` when local DNS resolves the Unraid hostname. When prompted for authentication, retrieve the token:
+
+```bash
+grep '^OPENCLAW_GATEWAY_TOKEN=' /mnt/user/appdata/openclaw/.env | cut -d= -f2-
+```
+
+Paste it into the OpenClaw Control UI settings, then open WebChat and send a test message. OpenClaw applies authentication during the dashboard WebSocket connection. The token remains in browser session storage for the current tab, rather than permanently in local storage.
+
+## 10. Test the CLI
+
+```bash
+cd /mnt/user/appdata/openclaw
+docker compose run --rm openclaw-cli gateway probe
+docker compose run --rm openclaw-cli models list
+docker compose run --rm openclaw-cli agent \
+  --message "Reply with: OpenClaw is running on Unraid."
+docker compose run --rm openclaw-cli doctor
+```
+
+## 11. Add a messaging channel later
+
+Once WebChat works, add and test channels one at a time.
+
+### Telegram
+
+```bash
+docker compose run --rm openclaw-cli channels add \
+  --channel telegram --token "YOUR_TELEGRAM_BOT_TOKEN"
+```
+
+### Discord
+
+```bash
+docker compose run --rm openclaw-cli channels add \
+  --channel discord --token "YOUR_DISCORD_BOT_TOKEN"
+```
+
+### WhatsApp
+
+```bash
+docker compose run --rm openclaw-cli channels login
+```
+
+The WhatsApp command presents a pairing flow. OpenClaw also supports Telegram, Discord, Slack, Signal, Microsoft Teams, and WebChat. Test a channel's pairing and sender restrictions before moving on to another.
+
+## 12. Update OpenClaw
+
+```bash
+cd /mnt/user/appdata/openclaw
+docker compose pull
+docker compose up -d openclaw-gateway
+docker image prune
+docker compose logs --tail=100 openclaw-gateway
+```
+
+OpenClaw runs supported state and configuration migrations when a newer image starts against an existing persistent configuration directory. For a more controlled deployment, replace `openclaw/openclaw:latest` with a tested version tag such as `openclaw/openclaw:2026.x.x` in **both** services. They must use the same image version.
+
+## 13. Back up persistent state
+
+Back up both of these directories:
+
+```text
+/mnt/user/appdata/openclaw/config
+/mnt/user/appdata/openclaw/auth-profile-secrets
+```
+
+The second contains the encryption material associated with stored OAuth authentication profiles. Losing it can make persisted provider credentials unusable. A basic manual backup is:
+
+```bash
+mkdir -p /mnt/user/backups/openclaw
+tar -czf "/mnt/user/backups/openclaw/openclaw-$(date +%F).tar.gz" \
+  -C /mnt/user/appdata openclaw
+```
+
+## 14. Security recommendations
+
+The Control UI is an administrative interface with chat, configuration, and execution-approval abilities. Do not expose it directly to the public internet.
+
+- Do not forward port `18789` through your router.
+- Do not expose it through Cloudflare Tunnel without an identity-aware access layer.
+- Do not mount `/mnt/user`, `/boot`, or other broad host paths into the container.
+- Do not mount `/var/run/docker.sock`.
+- Keep the Gateway token out of screenshots, logs, and Git repositories.
+- Review third-party skills before installing them.
+- Start with low-risk, read-only integrations.
+- Use Tailscale or an SSH tunnel for remote administration.
+- Keep message-channel pairing enabled instead of accepting unrestricted inbound messages.
+
+OpenClaw's default direct-message policy pairs unknown senders rather than immediately processing their requests.
+
+## Troubleshooting
+
+### Permission denied or `EACCES`
+
+```bash
+chown -R 1000:1000 /mnt/user/appdata/openclaw
+chmod 700 /mnt/user/appdata/openclaw/auth-profile-secrets
+docker compose restart openclaw-gateway
+```
+
+The container runs as UID `1000`, which is the usual cause of appdata permission errors.
+
+### The UI reports an invalid or rejected origin
+
+Check the exact URL in your browser, for example `http://192.168.1.50:18789`. Its scheme, hostname, and port must appear in `gateway.controlUi.allowedOrigins`. Re-run step 7 with the correct values.
+
+### The UI opens but authentication fails
+
+Confirm that the container received the token:
+
+```bash
+docker exec openclaw printenv OPENCLAW_GATEWAY_TOKEN
+grep OPENCLAW_GATEWAY_TOKEN /mnt/user/appdata/openclaw/.env
+docker compose restart openclaw-gateway
+```
+
+### The container keeps restarting
+
+Inspect the logs, then run the repair command using the same persistent mounts:
+
+```bash
+docker compose logs --tail=200 openclaw-gateway
+docker compose run --rm --no-deps --entrypoint node openclaw-gateway \
+  dist/index.js doctor --fix
+docker compose up -d openclaw-gateway
+```
+
+The official upgrade guidance recommends `doctor --fix` against the same mounted state when a startup migration cannot safely complete.
+
+### The Gateway is healthy but the model does not respond
+
+```bash
+docker compose run --rm openclaw-cli models list
+docker compose run --rm openclaw-cli doctor
+docker compose logs --tail=200 openclaw-gateway
+```
+
+Then return to the Control UI and confirm the default agent has a valid provider and model selected.
+
+## Finished result
+
+You should now have:
+
+- OpenClaw Control UI: `http://UNRAID-IP:18789`
+- Container: `openclaw`
+- Persistent data: `/mnt/user/appdata/openclaw`
+- Docker image: `openclaw/openclaw:latest`
+
+Use the built-in WebChat for initial testing. Add messaging channels and skills only after the base agent, provider, and workspace operate reliably.
