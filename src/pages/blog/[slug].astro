@@ -40,10 +40,18 @@ const schema = blogPostingSchema({
   datePublished: post.data.pubDate,
   tags: post.data.tags,
 });
+
+// Keep the <title> tag within Google's ~60-char SERP cutoff — only append the
+// site suffix when the post title leaves room for it.
+const SITE_SUFFIX = ' - Allister Antosik';
+const pageTitle =
+  post.data.title.length + SITE_SUFFIX.length <= 60
+    ? `${post.data.title}${SITE_SUFFIX}`
+    : post.data.title;
 ---
 
 <Layout
-  title={`${post.data.title} - Allister Antosik`}
+  title={pageTitle}
   description={post.data.description}
   ogType="article"
   schema={schema}

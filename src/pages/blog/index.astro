@@ -13,7 +13,10 @@ const posts = (await getPublishedPosts()).map((post) => ({
 const allTags = Array.from(new Set(posts.flatMap((post) => post.data.tags)));
 ---
 
-<Layout title="Allister Antosik - Lead SRE & AIOps Blog">
+<Layout
+  title="Allister Antosik - Lead SRE & AIOps Blog"
+  description="Deep dives, architectural reviews, and guides on cloud infrastructure reliability, automation, and anomaly detection from a Lead SRE & AIOps Engineer."
+>
   <Header />
 
   <main class="py-12 flex-1 flex flex-col gap-8 w-full" data-pagefind-body>
