@@ -32,9 +32,9 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@playwright/test": "^1.61.1",
-    "@typescript-eslint/parser": "^8.64.0",
-    "eslint": "^10.7.0",
+    "@playwright/test": "^1.62.0",
+    "@typescript-eslint/parser": "^8.65.0",
+    "eslint": "^10.8.0",
     "eslint-plugin-astro": "^3.0.1",
     "pagefind": "^1.5.2",
     "typescript": "^6.0.3",
