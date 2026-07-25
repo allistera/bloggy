@@ -10,6 +10,7 @@ import {
   type BlogPost,
 } from '../../lib/posts';
 import { blogPostingSchema } from '../../lib/schema';
+import { pageTitle } from '../../lib/seo';
 
 export async function getStaticPaths() {
   const posts = await getPublishedPosts();
@@ -41,17 +42,11 @@ const schema = blogPostingSchema({
   tags: post.data.tags,
 });
 
-// Keep the <title> tag within Google's ~60-char SERP cutoff — only append the
-// site suffix when the post title leaves room for it.
-const SITE_SUFFIX = ' - Allister Antosik';
-const pageTitle =
-  post.data.title.length + SITE_SUFFIX.length <= 60
-    ? `${post.data.title}${SITE_SUFFIX}`
-    : post.data.title;
+const title = pageTitle(post.data.title);
 ---
 
 <Layout
-  title={pageTitle}
+  title={title}
   description={post.data.description}
   ogType="article"
   schema={schema}

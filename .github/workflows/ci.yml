@@ -26,6 +26,18 @@ jobs:
       - run: npm ci
       - run: npm run lint
 
+  unit-test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run test:unit
+
   build:
     name: Build site + Pagefind
     runs-on: ubuntu-latest

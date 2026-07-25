@@ -1,37 +1,12 @@
-import { readdirSync, readFileSync } from 'node:fs';
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import sentry from '@sentry/astro';
 import sitemap from '@astrojs/sitemap';
 import vercel from '@astrojs/vercel';
 import tailwindcss from '@tailwindcss/vite';
+import { getBlogLastmod } from './src/lib/blog-lastmod.mjs';
 
-// Sitemap <lastmod> for blog posts, keyed by URL path. Reads frontmatter directly
-// since astro:content isn't available from this Node config file.
-function getBlogLastmod() {
-  const blogDir = new URL('./src/content/blog/', import.meta.url);
-  const now = new Date();
-  const lastmodByPath = new Map();
-
-  for (const file of readdirSync(blogDir)) {
-    if (!/\.(md|mdx)$/.test(file)) continue;
-    const raw = readFileSync(new URL(file, blogDir), 'utf-8');
-    const frontmatter = raw.match(/^---\n([\s\S]*?)\n---/)?.[1] ?? '';
-    if (/draft:\s*true/.test(frontmatter)) continue;
-
-    const pubDateMatch = frontmatter.match(/pubDate:\s*(\S+)/);
-    if (!pubDateMatch) continue;
-    const pubDate = new Date(pubDateMatch[1]);
-    if (pubDate > now) continue;
-
-    const slug = file.replace(/\.(md|mdx)$/, '');
-    lastmodByPath.set(`/blog/${slug}/`, pubDate.toISOString());
-  }
-
-  return lastmodByPath;
-}
-
-const blogLastmod = getBlogLastmod();
+const blogLastmod = getBlogLastmod(new URL('./src/content/blog/', import.meta.url));
 
 // https://astro.build/config
 export default defineConfig({
