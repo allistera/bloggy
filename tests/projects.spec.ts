@@ -7,13 +7,13 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
   test('TC-F2-01: HTMX Loading Attributes', async ({ page }) => {
     await page.goto('/');
     const projectsList = page.locator('#projects-list');
-    await expect(projectsList).toHaveAttribute('hx-get', '/api/projects');
+    await expect(projectsList).toHaveAttribute('hx-get', '/api/projects/');
     await expect(projectsList).toHaveAttribute('hx-trigger', 'load');
   });
 
   // TC-F2-02: API Projects Endpoint
   test('TC-F2-02: API Projects Endpoint', async ({ request }) => {
-    const response = await request.get('/api/projects');
+    const response = await request.get('/api/projects/');
     expect(response.status()).toBe(200);
     expect(response.headers()['content-type']).toContain('text/html');
     
@@ -26,7 +26,7 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
   // TC-F2-03: Dynamic Card Swapping
   test('TC-F2-03: Dynamic Card Swapping', async ({ page }) => {
     // Intercept and return mock projects HTML snippet
-    await page.route('/api/projects', route => {
+    await page.route('/api/projects/', route => {
       const html = mockProjects.map(p => formatProjectAsHtml(p)).join('\n');
       route.fulfill({
         status: 200,
@@ -42,7 +42,7 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
 
   // TC-F2-04: Project Card Details
   test('TC-F2-04: Project Card Details', async ({ page }) => {
-    await page.route('/api/projects', route => {
+    await page.route('/api/projects/', route => {
       route.fulfill({
         status: 200,
         contentType: 'text/html',
@@ -65,7 +65,7 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
   // TC-F2-05: Fallback Mock Cards
   test('TC-F2-05: Fallback Mock Cards', async ({ page }) => {
     // Intercept and abort the route to simulate network failure
-    await page.route('/api/projects', route => route.abort());
+    await page.route('/api/projects/', route => route.abort());
 
     await page.goto('/');
     
@@ -78,7 +78,7 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
 
   // TC-F2-06: Empty API Response
   test('TC-F2-06: Empty API Response', async ({ page }) => {
-    await page.route('/api/projects', route => {
+    await page.route('/api/projects/', route => {
       route.fulfill({
         status: 200,
         contentType: 'text/html',
@@ -93,7 +93,7 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
 
   // TC-F2-07: Spinner/Skeleton Loader
   test('TC-F2-07: Spinner/Skeleton Loader', async ({ page }) => {
-    await page.route('/api/projects', async route => {
+    await page.route('/api/projects/', async route => {
       await new Promise(resolve => setTimeout(resolve, 4000));
       route.fulfill({
         status: 200,
@@ -117,7 +117,7 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
 
   // TC-F2-08: API 500 Error Recovery
   test('TC-F2-08: API 500 Error Recovery', async ({ page }) => {
-    await page.route('/api/projects', route => {
+    await page.route('/api/projects/', route => {
       route.fulfill({
         status: 500,
         contentType: 'text/plain',
@@ -136,7 +136,7 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
 
   // TC-F2-09: Excessively Long Repository Details
   test('TC-F2-09: Excessively Long Repository Details', async ({ page }) => {
-    await page.route('/api/projects', route => {
+    await page.route('/api/projects/', route => {
       route.fulfill({
         status: 200,
         contentType: 'text/html',
@@ -158,7 +158,7 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
   // TC-F2-10: Network Timeout Failover
   test('TC-F2-10: Network Timeout Failover', async ({ page }) => {
     // Hang the request indefinitely
-    await page.route('/api/projects', async () => {
+    await page.route('/api/projects/', async () => {
       await new Promise(() => {}); // never resolves
     });
 

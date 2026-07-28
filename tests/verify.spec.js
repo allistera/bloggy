@@ -28,7 +28,7 @@ test.describe('Milestone 1: Astro Project Initialization & Setup Verification', 
     
     // Header Links
     const homeLink = page.locator('header nav a[href="/"]');
-    const blogLink = page.locator('header nav a[href="/blog"]');
+    const blogLink = page.locator('header nav a[href="/blog/"]');
     await expect(homeLink).toBeVisible();
     await expect(blogLink).toBeVisible();
     
@@ -72,12 +72,12 @@ test.describe('Milestone 1: Astro Project Initialization & Setup Verification', 
   test('TC-F2-01: HTMX Loading Attributes', async ({ page }) => {
     await page.goto('/');
     const projectsList = page.locator('#projects-list');
-    await expect(projectsList).toHaveAttribute('hx-get', '/api/projects');
+    await expect(projectsList).toHaveAttribute('hx-get', '/api/projects/');
     await expect(projectsList).toHaveAttribute('hx-trigger', 'load');
   });
 
   test('TC-F2-02: API Projects Endpoint Direct Access', async ({ request }) => {
-    const response = await request.get('/api/projects');
+    const response = await request.get('/api/projects/');
     expect(response.status()).toBe(200);
     const headers = response.headers();
     expect(headers['content-type']).toContain('text/html');
@@ -97,7 +97,7 @@ test.describe('Milestone 1: Astro Project Initialization & Setup Verification', 
     
     // Live endpoint currently ships multiple real project cards
     const cards = page.locator('#projects-list .project-card');
-    await expect(cards).toHaveCount(5);
+    await expect(cards).toHaveCount(6);
     
     // Verify metadata of first card
     const cardTitle = cards.nth(0).locator('h3');

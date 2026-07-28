@@ -4,7 +4,7 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
 
   // TC-F4-01: Blog Index Listing
   test('TC-F4-01: Blog Index Listing', async ({ page }) => {
-    await page.goto('/blog');
+    await page.goto('/blog/');
     
     const mainHeading = page.locator('h1');
     await expect(mainHeading).toBeVisible();
@@ -22,9 +22,25 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
     await expect(page.locator('text=Installing OpenClaw on Unraid')).toBeVisible();
   });
 
+  test('TC-F4-12: Canonical blog URLs use trailing slashes', async ({ page }) => {
+    await page.goto('/blog/');
+
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+      'href',
+      'https://allisterantosik.com/blog/',
+    );
+
+    const postLinks = page.locator('#blog-posts-list .blog-post-card > div a');
+    const hrefs = await postLinks.evaluateAll((links) =>
+      links.map((link) => link.getAttribute('href')),
+    );
+    expect(hrefs.length).toBeGreaterThan(0);
+    expect(hrefs.every((href) => /^\/blog\/[^/]+\/$/.test(href ?? ''))).toBe(true);
+  });
+
   // TC-F4-02: Blog Post Metadata
   test('TC-F4-02: Blog Post Metadata', async ({ page }) => {
-    await page.goto('/blog');
+    await page.goto('/blog/');
     
     const firstCard = page.locator('#blog-posts-list .blog-post-card').first();
     await expect(firstCard).toBeVisible();
@@ -42,7 +58,7 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
 
   // TC-F4-03: Blog Post Redirection
   test('TC-F4-03: Blog Post Redirection', async ({ page }) => {
-    await page.goto('/blog');
+    await page.goto('/blog/');
     
     const titleLink = page.locator('#blog-posts-list .blog-post-card a').first();
     const href = await titleLink.getAttribute('href');
@@ -58,7 +74,7 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
 
   // TC-F4-04: Markdown Rendering Elements
   test('TC-F4-04: Markdown Rendering Elements', async ({ page }) => {
-    await page.goto('/blog/zero-downtime-kubernetes-deployments');
+    await page.goto('/blog/zero-downtime-kubernetes-deployments/');
     
     const article = page.locator('article');
     await expect(article).toBeVisible();
@@ -81,7 +97,7 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
 
   // TC-F4-05: Blog Tag Filtering
   test('TC-F4-05: Blog Tag Filtering', async ({ page }) => {
-    await page.goto('/blog');
+    await page.goto('/blog/');
     
     const tagButton = page.locator('.tag-filter-btn[data-tag="Kubernetes"]');
     await expect(tagButton).toBeVisible();
@@ -102,7 +118,7 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
 
   // TC-F4-06: Future-Dated Posts Exclusion
   test('TC-F4-06: Future-Dated Posts Exclusion', async ({ page }) => {
-    await page.goto('/blog');
+    await page.goto('/blog/');
     
     const futurePost = page.locator('text=Fixture Future Post');
     await expect(futurePost).toBeHidden();
@@ -110,7 +126,7 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
 
   // TC-F4-07: Draft Status Exclusion
   test('TC-F4-07: Draft Status Exclusion', async ({ page }) => {
-    await page.goto('/blog');
+    await page.goto('/blog/');
     
     const draftPost = page.locator('text=Fixture Draft Post');
     await expect(draftPost).toBeHidden();
@@ -118,7 +134,7 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
 
   // TC-F4-08: Reading time present on longer posts
   test('TC-F4-08: Reading time on longer posts', async ({ page }) => {
-    await page.goto('/blog');
+    await page.goto('/blog/');
     
     const longPost = page.locator('.blog-post-card', { hasText: 'Two-Way iMessage/SMS for Home Assistant via Sendblue' });
     await expect(longPost).toBeVisible();
@@ -133,7 +149,7 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
 
   // TC-F4-09: Real article slugs navigate correctly
   test('TC-F4-09: Real article slug navigation', async ({ page }) => {
-    await page.goto('/blog');
+    await page.goto('/blog/');
     
     const postLink = page.locator('.blog-post-card', { hasText: 'Clean Up Your GitHub Account' }).locator('a').first();
     await expect(postLink).toBeVisible();
@@ -142,7 +158,7 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
     expect(href).toContain('/blog/clean-up-your-github-account');
     
     await postLink.click();
-    await page.waitForURL('**/blog/clean-up-your-github-account');
+    await page.waitForURL('**/blog/clean-up-your-github-account/');
     
     const heading = page.locator('main h1').first();
     await expect(heading).toBeVisible();
@@ -151,7 +167,7 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
 
   // TC-F4-11: OpenClaw on Unraid article renders structured installation steps
   test('TC-F4-11: OpenClaw on Unraid article', async ({ page }) => {
-    await page.goto('/blog/installing-openclaw-on-unraid');
+    await page.goto('/blog/installing-openclaw-on-unraid/');
 
     const article = page.locator('article');
     await expect(page.locator('main h1').first()).toHaveText('Installing OpenClaw on Unraid');
@@ -163,7 +179,7 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
 
   // TC-F4-10: Blog 404 Routing
   test('TC-F4-10: Blog 404 Routing', async ({ page }) => {
-    const response = await page.goto('/blog/invalid-slug');
+    const response = await page.goto('/blog/invalid-slug/');
     
     expect(response?.status()).toBe(404);
 
@@ -172,7 +188,7 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
 
     const returnBtn = page.locator('text=Return to Blog');
     await expect(returnBtn).toBeVisible();
-    await expect(returnBtn).toHaveAttribute('href', '/blog');
+    await expect(returnBtn).toHaveAttribute('href', '/blog/');
   });
 
 });

@@ -74,7 +74,7 @@ const allTags = Array.from(new Set(posts.flatMap((post) => post.data.tags)));
                 <span>{new Date(post.data.pubDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                 <span class="reading-time">{post.readingTime}</span>
               </div>
-              <a href={`/blog/${post.id}`} class="group">
+              <a href={`/blog/${post.id}/`} class="group">
                 <h2 class="text-xl font-bold text-zinc-100 font-mono tracking-wide group-hover:text-emerald-400 transition-colors">
                   {post.data.title}
                 </h2>

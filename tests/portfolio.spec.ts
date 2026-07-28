@@ -38,7 +38,7 @@ test.describe('Feature 1: Portfolio Showcase Homepage (R1) - Tier 1 & Tier 2', (
   test('TC-F1-04: Header & Footer Navigation Links', async ({ page }) => {
     // Header Links
     const homeLink = page.locator('header nav a[href="/"]');
-    const blogLink = page.locator('header nav a[href="/blog"]');
+    const blogLink = page.locator('header nav a[href="/blog/"]');
     await expect(homeLink).toBeVisible();
     await expect(blogLink).toBeVisible();
 
