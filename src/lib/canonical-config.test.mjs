@@ -14,4 +14,18 @@ describe('canonical URL configuration', () => {
   it('redirects non-trailing-slash requests on Vercel', () => {
     expect(vercelConfig.trailingSlash).toBe(true);
   });
+
+  it('redirects legacy article URLs after trailing-slash normalization', () => {
+    expect(vercelConfig.redirects).toContainEqual({
+      source: '/articles/clean-up-your-github-account/',
+      destination: '/blog/clean-up-your-github-account/',
+      permanent: true,
+    });
+    expect(
+      vercelConfig.redirects.every(
+        ({ source, destination, permanent }) =>
+          source.endsWith('/') && destination.endsWith('/') && permanent === true,
+      ),
+    ).toBe(true);
+  });
 });

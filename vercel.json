@@ -1,4 +1,36 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "trailingSlash": true
+  "trailingSlash": true,
+  "redirects": [
+    {
+      "source": "/articles/clean-up-your-github-account/",
+      "destination": "/blog/clean-up-your-github-account/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/mass-uninstall-ios-apps-apple-configurator/",
+      "destination": "/blog/mass-uninstall-ios-apps-apple-configurator/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/two_way_imessage/",
+      "destination": "/blog/two-way-imessage/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/two-way-imessage/",
+      "destination": "/blog/two-way-imessage/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/zero-downtime-kubernetes-deployments/",
+      "destination": "/blog/zero-downtime-kubernetes-deployments/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/",
+      "destination": "/blog/",
+      "permanent": true
+    }
+  ]
 }

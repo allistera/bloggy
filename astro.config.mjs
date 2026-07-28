@@ -13,17 +13,6 @@ export default defineConfig({
   site: 'https://allisterantosik.com',
   trailingSlash: 'always',
   adapter: vercel(),
-  // Legacy paths from allistera.github.io → canonical /blog/*/ routes
-  redirects: {
-    '/articles/clean-up-your-github-account': '/blog/clean-up-your-github-account/',
-    '/articles/mass-uninstall-ios-apps-apple-configurator':
-      '/blog/mass-uninstall-ios-apps-apple-configurator/',
-    '/articles/two_way_imessage': '/blog/two-way-imessage/',
-    '/articles/two-way-imessage': '/blog/two-way-imessage/',
-    '/articles/zero-downtime-kubernetes-deployments':
-      '/blog/zero-downtime-kubernetes-deployments/',
-    '/articles': '/blog/',
-  },
   // Explicit Shiki syntax highlighting for Markdown + MDX (not Prism)
   markdown: {
     syntaxHighlight: 'shiki',
