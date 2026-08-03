@@ -20,6 +20,7 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
     await expect(page.locator('text=Mass Uninstall iOS Apps with Apple Configurator on Mac')).toBeVisible();
     await expect(page.locator('text=Zero-Downtime Deployments with Kubernetes Rolling Updates')).toBeVisible();
     await expect(page.locator('text=Installing OpenClaw on Unraid')).toBeVisible();
+    await expect(page.locator('text=Hono + Datastar: A Future-Resilient TypeScript Web Stack')).toBeVisible();
   });
 
   test('TC-F4-12: Canonical blog URLs use trailing slashes', async ({ page }) => {
@@ -174,6 +175,28 @@ test.describe('Feature 4: Astro Markdown Blog (R4) - Tier 1 & Tier 2', () => {
     await expect(article.locator('h2', { hasText: 'Create the Docker Compose file' })).toBeVisible();
     await expect(article.locator('pre').filter({ hasText: 'openclaw-gateway:' }).first()).toBeVisible();
     await expect(article.locator('text=Security recommendations')).toBeVisible();
+  });
+
+  test('TC-F4-13: Hono and Datastar article renders with SEO metadata', async ({ page }) => {
+    await page.goto('/blog/hono-datastar-future-resilient-stack/');
+
+    await expect(page.locator('main h1').first()).toHaveText(
+      'Hono + Datastar: A Future-Resilient TypeScript Web Stack',
+    );
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+      'content',
+      'Build server-driven TypeScript apps with Hono and Datastar using HTML-first updates, portable Web APIs, and SSE only when streaming earns its keep.',
+    );
+
+    const article = page.locator('article');
+    await expect(article.locator('h2', { hasText: 'What are Hono and Datastar?' })).toBeVisible();
+    await expect(article.locator('h2', { hasText: 'Production guardrails' })).toBeVisible();
+    await expect(
+      article
+        .locator('pre')
+        .filter({ hasText: "import { streamSSE } from 'hono/streaming';" })
+        .first(),
+    ).toBeVisible();
   });
 
 
