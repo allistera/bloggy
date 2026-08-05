@@ -10,7 +10,7 @@ export const personSchema = {
   jobTitle: 'Lead SRE & AIOps Engineer',
   sameAs: [
     'https://github.com/allistera',
-    'https://www.linkedin.com/in/allister-antosik-160433395/',
+    'https://www.linkedin.com/in/allisterantosik/',
   ],
   image: `${SITE}/logo.png`,
   description:
