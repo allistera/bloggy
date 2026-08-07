@@ -20,8 +20,10 @@ export default defineConfig({
       // Dark theme aligned with zinc/emerald site chrome
       theme: 'github-dark-dimmed',
       wrap: true,
-      // Common blog langs are built-in; leave langs empty for full bundle defaults
+      // Use Shiki defaults (full bundle) — explicit lang list breaks MDX blocks
+      // like ```env which Shiki doesn't have. Keep env as plaintext alias.
       langs: [],
+      langAlias: { env: 'plaintext' },
     },
   },
   integrations: [

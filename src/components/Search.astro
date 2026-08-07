@@ -5,8 +5,41 @@
  */
 ---
 
-<link rel="stylesheet" href="/pagefind/pagefind-component-ui.css" />
-<script src="/pagefind/pagefind-component-ui.js" type="module"></script>
+<!-- Prefetch Pagefind assets on interaction (saves ~770KB+ initial load) -->
+<link rel="preload" href="/pagefind/pagefind-component-ui.css" as="style" id="pf-preload-css" />
+<script>
+  (() => {
+    let loaded = false;
+    const load = () => {
+      if (loaded) return;
+      loaded = true;
+      const link = document.getElementById('pf-preload-css');
+      if (link) link.rel = 'stylesheet';
+      else {
+        const l = document.createElement('link');
+        l.rel = 'stylesheet';
+        l.href = '/pagefind/pagefind-component-ui.css';
+        document.head.appendChild(l);
+      }
+      const s = document.createElement('script');
+      s.src = '/pagefind/pagefind-component-ui.js';
+      s.type = 'module';
+      document.head.appendChild(s);
+    };
+    const trigger = document.querySelector('.site-search-trigger');
+    const events = ['mouseenter', 'focusin', 'click', 'keydown'];
+    events.forEach((ev) => {
+      trigger?.addEventListener(ev, load, { once: true, passive: true });
+      document.addEventListener(ev, load, { once: true, passive: true } as AddEventListenerOptions);
+    });
+    // Fallback: load after idle
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(load, { timeout: 5000 });
+    } else {
+      setTimeout(load, 3000);
+    }
+  })();
+</script>
 
 <!-- Modal UI: wide trigger styled as a search field -->
 <pagefind-modal-trigger

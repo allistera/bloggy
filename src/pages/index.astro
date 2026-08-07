@@ -159,9 +159,13 @@ const latestPosts = (await getPublishedPosts())
           return false;
         };
         if (!configureHtmx()) {
+          let attempts = 0;
           const interval = setInterval(() => {
-            if (configureHtmx()) clearInterval(interval);
-          }, 20);
+            attempts++;
+            if (configureHtmx() || attempts > 100) clearInterval(interval);
+          }, 50);
+          // Safety: ensure no infinite polling
+          setTimeout(() => clearInterval(interval), 5500);
         }
 
         const renderFallback = () => {

@@ -89,26 +89,12 @@ const schemaList = schema
       }}
     />
 
-    <!-- Explicit icon links (broader browser coverage) -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/site.webmanifest" />
-    <link
-      rel="alternate"
-      type="application/rss+xml"
-      title="Allister Antosik RSS"
-      href="/rss.xml"
-    />
-
     {schemaList.map((entry) => (
       <script type="application/ld+json" set:html={JSON.stringify(entry)} />
     ))}
 
     <meta name="htmx-config" content='{"timeout": 3000}' />
-    <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+    <script src="/vendor/htmx.min.js" defer integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
   </head>
   <body class="bg-zinc-950 text-zinc-50 min-h-screen flex flex-col w-full font-mono">
     <div class="flex-1 flex flex-col w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

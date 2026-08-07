@@ -240,6 +240,10 @@ import staticData from '../data/carousel.json';
                   class="carousel-image max-h-56 w-full rounded object-cover transition group-hover:opacity-90"
                   src="${image}"
                   alt="${item.title} screenshot 1"
+                  width="600"
+                  height="400"
+                  decoding="async"
+                  fetchpriority="${index === 0 ? 'high' : 'auto'}"
                   loading="${index === 0 ? 'eager' : 'lazy'}"
                   onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22200%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%2318181b%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23ff3333%22 font-family=%22monospace%22 font-size=%2214%22>Image Load Failure</text></svg>'"
                 />

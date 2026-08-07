@@ -29,6 +29,9 @@ const { post } = Astro.props;
 const { Content } = await render(post);
 const readingTime = readingTimeMinutes(post.body);
 
+// getPublishedPosts already called in getStaticPaths; in static build this
+// is cached, but avoid double-fetch by reusing when possible. For now keep
+// single call and derive related from it to avoid extra sorting/filtering.
 const published = await getPublishedPosts();
 const related = getRelatedPosts(post, published, 3);
 
