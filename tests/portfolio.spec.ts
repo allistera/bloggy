@@ -145,7 +145,7 @@ test.describe('Feature 1: Portfolio Showcase Homepage (R1) - Tier 1 & Tier 2', (
     const descMeta = page.locator('meta[name="description"]');
     await expect(descMeta).toHaveAttribute(
       'content',
-      'Lead SRE & AIOps Engineer Portfolio and Blog — automation, reliability, and high-performance systems.',
+      'Lead SRE & AIOps Engineer based in Edinburgh, Scotland — portfolio and blog on automation, reliability, and high-performance systems.',
     );
 
     // OpenGraph

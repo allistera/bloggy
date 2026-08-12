@@ -57,7 +57,7 @@ test.describe('Milestone 1: Astro Project Initialization & Setup Verification', 
     const descMeta = page.locator('meta[name="description"]');
     await expect(descMeta).toHaveAttribute(
       'content',
-      'Lead SRE & AIOps Engineer Portfolio and Blog — automation, reliability, and high-performance systems.',
+      'Lead SRE & AIOps Engineer based in Edinburgh, Scotland — portfolio and blog on automation, reliability, and high-performance systems.',
     );
     
     // OpenGraph
