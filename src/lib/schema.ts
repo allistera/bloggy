@@ -8,13 +8,19 @@ export const personSchema = {
   url: SITE,
   email: EMAIL,
   jobTitle: 'Lead SRE & AIOps Engineer',
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Edinburgh',
+    addressRegion: 'Scotland',
+    addressCountry: 'GB',
+  },
   sameAs: [
     'https://github.com/allistera',
     'https://www.linkedin.com/in/allisterantosik/',
   ],
   image: `${SITE}/logo.png`,
   description:
-    'Lead SRE & AIOps Engineer — automation, reliability, and high-performance systems.',
+    'Lead SRE & AIOps Engineer based in Edinburgh, Scotland — automation, reliability, and high-performance systems.',
 };
 
 export function blogPostingSchema(opts: {
@@ -67,7 +73,7 @@ export function websiteSchema() {
     name: 'Allister Antosik',
     url: SITE,
     description:
-      'Lead SRE & AIOps Engineer portfolio and blog — automation, reliability, and high-performance systems.',
+      'Lead SRE & AIOps Engineer based in Edinburgh, Scotland — portfolio and blog on automation, reliability, and high-performance systems.',
     author: personSchema,
   };
 }
