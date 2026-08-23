@@ -5,39 +5,55 @@
  */
 ---
 
-<!-- Prefetch Pagefind assets on interaction (saves ~770KB+ initial load) -->
-<link rel="preload" href="/pagefind/pagefind-component-ui.css" as="style" id="pf-preload-css" />
+<!-- Load Pagefind only when the search control is used. -->
 <script>
   (() => {
-    let loaded = false;
+    let loadPromise: Promise<void> | undefined;
     const load = () => {
-      if (loaded) return;
-      loaded = true;
-      const link = document.getElementById('pf-preload-css');
-      if (link) link.rel = 'stylesheet';
-      else {
-        const l = document.createElement('link');
-        l.rel = 'stylesheet';
-        l.href = '/pagefind/pagefind-component-ui.css';
-        document.head.appendChild(l);
-      }
-      const s = document.createElement('script');
-      s.src = '/pagefind/pagefind-component-ui.js';
-      s.type = 'module';
-      document.head.appendChild(s);
+      if (loadPromise) return loadPromise;
+
+      loadPromise = new Promise((resolve, reject) => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = '/pagefind/pagefind-component-ui.css';
+        document.head.appendChild(link);
+
+        const script = document.createElement('script');
+        script.src = '/pagefind/pagefind-component-ui.js';
+        script.type = 'module';
+        script.addEventListener('load', async () => {
+          await customElements.whenDefined('pagefind-modal-trigger');
+          resolve();
+        }, { once: true });
+        script.addEventListener('error', () => reject(new Error('Unable to load search')), { once: true });
+        document.head.appendChild(script);
+      });
+
+      return loadPromise;
     };
+
     const trigger = document.querySelector('.site-search-trigger');
-    const events = ['mouseenter', 'focusin', 'click', 'keydown'];
-    events.forEach((ev) => {
-      trigger?.addEventListener(ev, load, { once: true, passive: true });
-      document.addEventListener(ev, load, { once: true, passive: true } as AddEventListenerOptions);
+    const openSearch = () => {
+      trigger?.querySelector<HTMLButtonElement>('button')?.click();
+    };
+    ['pointerenter', 'focusin', 'pointerdown'].forEach((eventName) => {
+      trigger?.addEventListener(eventName, () => void load(), { once: true, passive: true });
     });
-    // Fallback: load after idle
-    if ('requestIdleCallback' in window) {
-      (window as any).requestIdleCallback(load, { timeout: 5000 });
-    } else {
-      setTimeout(load, 3000);
-    }
+
+    trigger?.addEventListener('click', async (event) => {
+      if (customElements.get('pagefind-modal-trigger')) return;
+      event.preventDefault();
+      await load();
+      openSearch();
+    });
+
+    document.addEventListener('keydown', async (event) => {
+      if (event.key.toLowerCase() !== 'k' || (!event.metaKey && !event.ctrlKey)) return;
+      if (customElements.get('pagefind-modal-trigger')) return;
+      event.preventDefault();
+      await load();
+      openSearch();
+    });
   })();
 </script>
 
@@ -46,6 +62,8 @@
   class="site-search-trigger"
   data-pagefind-ignore
   aria-label="Search site"
+  role="button"
+  tabindex="0"
 >
   <span class="site-search-trigger__inner">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="site-search-trigger__icon" aria-hidden="true">

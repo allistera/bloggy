@@ -138,7 +138,7 @@ const latestPosts = (await getPublishedPosts())
         </span>
       </div>
 
-      <div id="projects-list" hx-get="/api/projects/" hx-trigger="load" class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+      <div id="projects-list" hx-get="/api/projects/" hx-trigger="revealed" class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
         <!-- Spinner/Skeleton Loader shown while HTMX is fetching -->
         <div class="col-span-full py-12 flex flex-col items-center justify-center gap-3 text-zinc-500 font-mono border border-dashed border-zinc-800 rounded">
           <svg class="animate-spin h-5 w-5 text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -152,22 +152,8 @@ const latestPosts = (await getPublishedPosts())
 
     <script is:inline>
       (() => {
-        const configureHtmx = () => {
-          if (window.htmx) {
-            htmx.config.timeout = 3000;
-            return true;
-          }
-          return false;
-        };
-        if (!configureHtmx()) {
-          let attempts = 0;
-          const interval = setInterval(() => {
-            attempts++;
-            if (configureHtmx() || attempts > 100) clearInterval(interval);
-          }, 50);
-          // Safety: ensure no infinite polling
-          setTimeout(() => clearInterval(interval), 5500);
-        }
+        const projectsList = document.getElementById('projects-list');
+        if (!projectsList) return;
 
         const renderFallback = () => {
           const projectsList = document.getElementById('projects-list');
@@ -225,6 +211,35 @@ const latestPosts = (await getPublishedPosts())
         document.addEventListener('htmx:responseError', showFallback);
         document.addEventListener('htmx:sendError', showFallback);
         document.addEventListener('htmx:timeout', showFallback);
+
+        let loadingHtmx = false;
+        const loadProjects = () => {
+          if (loadingHtmx || window.htmx) return;
+          loadingHtmx = true;
+
+          const script = document.createElement('script');
+          script.src = '/vendor/htmx.min.js';
+          script.integrity = 'sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+';
+          script.crossOrigin = 'anonymous';
+          script.addEventListener('load', () => {
+            window.htmx.config.timeout = 3000;
+            window.htmx.process(projectsList);
+            window.htmx.trigger(projectsList, 'revealed');
+          }, { once: true });
+          script.addEventListener('error', showFallback, { once: true });
+          document.head.appendChild(script);
+        };
+
+        if ('IntersectionObserver' in window) {
+          const observer = new IntersectionObserver((entries) => {
+            if (!entries.some((entry) => entry.isIntersecting)) return;
+            observer.disconnect();
+            loadProjects();
+          }, { rootMargin: '400px 0px' });
+          observer.observe(projectsList);
+        } else {
+          loadProjects();
+        }
       })();
     </script>
 

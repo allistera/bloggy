@@ -42,6 +42,9 @@ test.describe('Feature 3: Interactive Screenshot Carousel (R3) - Tier 1 & Tier 2
     }, mockCarouselData);
 
     await page.goto('/');
+    const carousel = page.locator('#carousel-container');
+    await carousel.scrollIntoViewIfNeeded();
+    await expect(carousel).toHaveAttribute('data-carousel-ready', 'true');
   });
 
 
@@ -127,6 +130,9 @@ test.describe('Feature 3: Interactive Screenshot Carousel (R3) - Tier 1 & Tier 2
     }, singleCarouselItem);
 
     await singlePage.goto('/');
+    const singleCarousel = singlePage.locator('#carousel-container');
+    await singleCarousel.scrollIntoViewIfNeeded();
+    await expect(singleCarousel).toHaveAttribute('data-carousel-ready', 'true');
 
     const container = singlePage.locator('#carousel-container');
     await expect(container).toBeVisible();
@@ -162,6 +168,9 @@ test.describe('Feature 3: Interactive Screenshot Carousel (R3) - Tier 1 & Tier 2
     await brokenPage.route('**/non-existent-image-path.png', route => route.abort());
 
     await brokenPage.goto('/');
+    const brokenCarousel = brokenPage.locator('#carousel-container');
+    await brokenCarousel.scrollIntoViewIfNeeded();
+    await expect(brokenCarousel).toHaveAttribute('data-carousel-ready', 'true');
 
     const container = brokenPage.locator('#carousel-container');
     const image = container.locator('.carousel-slide.active .carousel-image');
@@ -235,6 +244,9 @@ test.describe('Feature 3: Interactive Screenshot Carousel (R3) - Tier 1 & Tier 2
     }, missingLinkCarousel);
 
     await missingLinkPage.goto('/');
+    const missingLinkCarouselElement = missingLinkPage.locator('#carousel-container');
+    await missingLinkCarouselElement.scrollIntoViewIfNeeded();
+    await expect(missingLinkCarouselElement).toHaveAttribute('data-carousel-ready', 'true');
 
     const container = missingLinkPage.locator('#carousel-container');
     const activeSlide = container.locator('.carousel-slide.active');

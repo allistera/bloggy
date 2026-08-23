@@ -3,12 +3,16 @@ import { mockProjects, longProjectDetails, formatProjectAsHtml } from './helpers
 
 test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Tier 2', () => {
 
+  const revealProjects = async (page: import('@playwright/test').Page) => {
+    await page.locator('#projects-list').scrollIntoViewIfNeeded();
+  };
+
   // TC-F2-01: HTMX Loading Attributes
   test('TC-F2-01: HTMX Loading Attributes', async ({ page }) => {
     await page.goto('/');
     const projectsList = page.locator('#projects-list');
     await expect(projectsList).toHaveAttribute('hx-get', '/api/projects/');
-    await expect(projectsList).toHaveAttribute('hx-trigger', 'load');
+    await expect(projectsList).toHaveAttribute('hx-trigger', 'revealed');
   });
 
   // TC-F2-02: API Projects Endpoint
@@ -36,6 +40,7 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
     });
 
     await page.goto('/');
+    await revealProjects(page);
     const cards = page.locator('#projects-list .project-card');
     await expect(cards).toHaveCount(mockProjects.length);
   });
@@ -51,6 +56,7 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
     });
 
     await page.goto('/');
+    await revealProjects(page);
     const firstCard = page.locator('#projects-list .project-card').first();
     await expect(firstCard).toBeVisible();
 
@@ -68,6 +74,7 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
     await page.route('/api/projects/', route => route.abort());
 
     await page.goto('/');
+    await revealProjects(page);
     
     // Check that the page gracefully displays the fallback cached projects
     const cards = page.locator('#projects-list .project-card');
@@ -87,6 +94,7 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
     });
 
     await page.goto('/');
+    await revealProjects(page);
     const container = page.locator('#projects-list');
     await expect(container).toContainText('No repositories found');
   });
@@ -103,6 +111,7 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
     });
 
     await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await revealProjects(page);
     
     // Verify loading spinner is visible initially
     const spinner = page.locator('#projects-list svg');
@@ -126,6 +135,7 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
     });
 
     await page.goto('/');
+    await revealProjects(page);
     
     // Recovery expectation: falls back to rendering local pre-cached configurations
     const cards = page.locator('#projects-list .project-card');
@@ -145,6 +155,7 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
     });
 
     await page.goto('/');
+    await revealProjects(page);
     
     const card = page.locator('#projects-list .project-card').first();
     await expect(card).toBeVisible();
@@ -163,6 +174,7 @@ test.describe('Feature 2: Dynamic GitHub Projects Integration (R2) - Tier 1 & Ti
     });
 
     await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await revealProjects(page);
     
     // Expectation: terminates after timeout and falls back to rendering local projects
     const cards = page.locator('#projects-list .project-card');

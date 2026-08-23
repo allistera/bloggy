@@ -1,9 +1,30 @@
 ---
 import staticData from '../data/carousel.json';
+
+const responsiveImage = (image: string) => {
+  if (!image.startsWith('/screenshots/') || !image.endsWith('.webp')) {
+    return { src: image, srcset: undefined };
+  }
+
+  const base = image.slice(0, -'.webp'.length);
+  return {
+    src: `${base}-640.webp`,
+    srcset: `${base}-640.webp 640w, ${base}-1200.webp 1200w`,
+  };
+};
+
+const imageDimensions = (image: string) => image.includes('mobile-dashboard')
+  ? { width: 640, height: 1391 }
+  : { width: 640, height: 436 };
 ---
 
-<div id="carousel-container" tabindex="0" class="relative w-full border border-zinc-800 rounded bg-zinc-950 p-6 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-  <!-- Browser Mockup Header -->
+<div
+  id="carousel-container"
+  tabindex="0"
+  data-carousel-items={JSON.stringify(staticData)}
+  data-carousel-ready="false"
+  class="relative w-full border border-zinc-800 rounded bg-zinc-950 p-6 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+>
   <div class="flex items-center gap-2 px-4 py-2 bg-zinc-900 border-b border-zinc-800 rounded-t -mx-6 -mt-6 mb-6">
     <div class="w-3 h-3 rounded-full bg-red-500"></div>
     <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
@@ -11,30 +32,77 @@ import staticData from '../data/carousel.json';
     <span class="text-xs text-zinc-500 font-mono ml-4">https://github.com/allistera</span>
   </div>
 
-  <!-- Slides Container -->
   <div class="relative w-full overflow-hidden min-h-[260px] flex items-center justify-center">
     <div id="carousel-slides" class="w-full">
-      <!-- Slides will be injected dynamically -->
+      {staticData.map((item, index) => {
+        const image = item.images[0] || '';
+        const displayImage = responsiveImage(image);
+        const dimensions = imageDimensions(image);
+        const hasMultipleImages = item.images.length > 1;
+
+        return (
+          <div class:list={['carousel-slide flex flex-col md:flex-row gap-6 items-center w-full', { active: index === 0, hidden: index !== 0 }]} data-index={index}>
+            <div class="w-full md:w-1/2 flex flex-col justify-center">
+              <button
+                type="button"
+                class="carousel-image-btn group relative max-w-full rounded border border-zinc-800 bg-zinc-950 p-0 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                data-project-index={index}
+                data-image-index="0"
+                aria-label={`Open screenshot: ${item.title}`}
+              >
+                <img
+                  class="carousel-image max-h-56 w-full rounded object-cover transition group-hover:opacity-90"
+                  src={displayImage.src}
+                  srcset={displayImage.srcset}
+                  sizes="(min-width: 1280px) 576px, (min-width: 768px) calc(50vw - 4rem), calc(100vw - 5rem)"
+                  alt={`${item.title} screenshot 1`}
+                  width={dimensions.width}
+                  height={dimensions.height}
+                  decoding="async"
+                  fetchpriority="low"
+                  loading="lazy"
+                />
+                <span class="pointer-events-none absolute inset-x-0 bottom-0 bg-zinc-950/80 py-1 text-center font-mono text-[10px] text-emerald-400 opacity-0 transition group-hover:opacity-100">
+                  Click to expand
+                </span>
+              </button>
+              <div class:list={['carousel-image-controls mt-3 flex items-center justify-center gap-3', { hidden: !hasMultipleImages }]} aria-label={`${item.title} screenshots`}>
+                <button type="button" class="carousel-image-prev rounded border border-zinc-800 bg-zinc-900 px-2 py-1 font-mono text-xs text-zinc-400 hover:text-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500" data-project-index={index} aria-label={`Previous ${item.title} screenshot`}>&lt; Prev image</button>
+                <span class="carousel-image-counter font-mono text-xs text-zinc-500" aria-live="polite">1 / {item.images.length}</span>
+                <button type="button" class="carousel-image-next rounded border border-zinc-800 bg-zinc-900 px-2 py-1 font-mono text-xs text-zinc-400 hover:text-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500" data-project-index={index} aria-label={`Next ${item.title} screenshot`}>Next image &gt;</button>
+              </div>
+            </div>
+            <div class="w-full md:w-1/2 flex flex-col gap-4">
+              <h3 class="carousel-title text-xl font-bold text-zinc-100 font-mono tracking-wide">{item.title}</h3>
+              <p class="carousel-description text-sm text-zinc-400 leading-relaxed">{item.description}</p>
+              <div class="pt-2">
+                {item.link
+                  ? <a href={item.link} target="_blank" rel="noopener noreferrer" class="carousel-link inline-block px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-bold font-mono text-xs rounded transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400">View Repository</a>
+                  : <span class="carousel-link inline-block px-4 py-2 bg-zinc-900 text-zinc-600 font-mono text-xs rounded opacity-50 cursor-not-allowed border border-zinc-800">No Link Available</span>}
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   </div>
 
-  <!-- Controls -->
-  <div id="carousel-controls" class="flex justify-between items-center mt-6 pt-4 border-t border-zinc-900">
-    <button id="carousel-prev" type="button" class="px-3 py-1 bg-zinc-900 border border-zinc-800 rounded text-zinc-400 hover:text-emerald-400 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-      &lt; Prev
-    </button>
-    
+  <div id="carousel-controls" class:list={['flex justify-between items-center mt-6 pt-4 border-t border-zinc-900', { hidden: staticData.length <= 1 }]}>
+    <button id="carousel-prev" type="button" class="px-3 py-1 bg-zinc-900 border border-zinc-800 rounded text-zinc-400 hover:text-emerald-400 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">&lt; Prev</button>
     <div id="carousel-dots" class="flex gap-2">
-      <!-- Dots will be injected dynamically -->
+      {staticData.map((_, index) => (
+        <button
+          type="button"
+          class:list={['carousel-dot w-3 h-3 rounded-full border border-zinc-700 bg-zinc-900 transition-colors focus:outline-none focus:ring-1 focus:ring-emerald-500', { 'active bg-emerald-400 border-emerald-400': index === 0 }]}
+          data-carousel-dot={index}
+          aria-label={`Go to slide ${index + 1}`}
+        ></button>
+      ))}
     </div>
-
-    <button id="carousel-next" type="button" class="px-3 py-1 bg-zinc-900 border border-zinc-800 rounded text-zinc-400 hover:text-emerald-400 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-      Next &gt;
-    </button>
+    <button id="carousel-next" type="button" class="px-3 py-1 bg-zinc-900 border border-zinc-800 rounded text-zinc-400 hover:text-emerald-400 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">Next &gt;</button>
   </div>
 </div>
 
-<!-- Screenshot lightbox / popup -->
 <div
   id="carousel-lightbox"
   class="fixed inset-0 z-50 hidden items-center justify-center p-4 sm:p-8"
@@ -43,352 +111,46 @@ import staticData from '../data/carousel.json';
   aria-labelledby="carousel-lightbox-title"
   aria-hidden="true"
 >
-  <button
-    type="button"
-    id="carousel-lightbox-backdrop"
-    class="absolute inset-0 bg-zinc-950/90 backdrop-blur-sm border-0 cursor-default"
-    aria-label="Close screenshot preview"
-  ></button>
-
+  <button type="button" id="carousel-lightbox-backdrop" class="absolute inset-0 bg-zinc-950/90 backdrop-blur-sm border-0 cursor-default" aria-label="Close screenshot preview"></button>
   <div class="relative z-10 flex w-full max-w-5xl max-h-[90vh] flex-col gap-3 rounded border border-zinc-700 bg-zinc-900 shadow-2xl shadow-emerald-500/10">
     <div class="flex items-center justify-between gap-4 border-b border-zinc-800 px-4 py-3">
       <h3 id="carousel-lightbox-title" class="truncate font-mono text-sm font-bold text-emerald-400 sm:text-base"></h3>
-      <button
-        type="button"
-        id="carousel-lightbox-close"
-        class="shrink-0 rounded border border-zinc-700 bg-zinc-950 px-3 py-1 font-mono text-xs text-zinc-300 hover:border-emerald-500 hover:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-      >
-        Close [Esc]
-      </button>
+      <button type="button" id="carousel-lightbox-close" class="shrink-0 rounded border border-zinc-700 bg-zinc-950 px-3 py-1 font-mono text-xs text-zinc-300 hover:border-emerald-500 hover:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500">Close [Esc]</button>
     </div>
-
     <div class="flex min-h-0 flex-1 items-center justify-center overflow-auto px-4 pb-2">
-      <img
-        id="carousel-lightbox-image"
-        src=""
-        alt=""
-        class="max-h-[70vh] w-auto max-w-full rounded border border-zinc-800 object-contain"
-      />
+      <img id="carousel-lightbox-image" src="" alt="" class="max-h-[70vh] w-auto max-w-full rounded border border-zinc-800 object-contain" />
     </div>
-
     <div class="flex items-center justify-between gap-3 border-t border-zinc-800 px-4 py-3">
-      <button
-        type="button"
-        id="carousel-lightbox-prev"
-        class="rounded border border-zinc-700 bg-zinc-950 px-3 py-1 font-mono text-xs text-zinc-300 hover:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-      >
-        &lt; Prev
-      </button>
+      <button type="button" id="carousel-lightbox-prev" class="rounded border border-zinc-700 bg-zinc-950 px-3 py-1 font-mono text-xs text-zinc-300 hover:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500">&lt; Prev</button>
       <p id="carousel-lightbox-caption" class="hidden text-center font-mono text-xs text-zinc-500 sm:block sm:max-w-md sm:truncate"></p>
-      <button
-        type="button"
-        id="carousel-lightbox-next"
-        class="rounded border border-zinc-700 bg-zinc-950 px-3 py-1 font-mono text-xs text-zinc-300 hover:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-      >
-        Next &gt;
-      </button>
+      <button type="button" id="carousel-lightbox-next" class="rounded border border-zinc-700 bg-zinc-950 px-3 py-1 font-mono text-xs text-zinc-300 hover:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500">Next &gt;</button>
     </div>
   </div>
 </div>
 
-<script define:vars={{ staticData }}>
-  document.addEventListener('DOMContentLoaded', () => {
-    let data = window.carouselData || null;
-
-    const container = document.getElementById('carousel-container');
-    const slidesContainer = document.getElementById('carousel-slides');
-    const prevBtn = document.getElementById('carousel-prev');
-    const nextBtn = document.getElementById('carousel-next');
-    const dotsContainer = document.getElementById('carousel-dots');
-
-    const lightbox = document.getElementById('carousel-lightbox');
-    const lightboxBackdrop = document.getElementById('carousel-lightbox-backdrop');
-    const lightboxClose = document.getElementById('carousel-lightbox-close');
-    const lightboxImage = document.getElementById('carousel-lightbox-image');
-    const lightboxTitle = document.getElementById('carousel-lightbox-title');
-    const lightboxCaption = document.getElementById('carousel-lightbox-caption');
-    const lightboxPrev = document.getElementById('carousel-lightbox-prev');
-    const lightboxNext = document.getElementById('carousel-lightbox-next');
-
-    if (!container || !slidesContainer || !lightbox || !lightboxImage) return;
-
-    let currentIndex = 0;
-    let lightboxProjectIndex = 0;
-    let lightboxImageIndex = 0;
-    let lightboxOpen = false;
-
-    const track = (name, attributes = {}) => {
-      try {
-        // Optional: telemetry-init may expose helpers later; fail soft
-        if (window.Sentry?.metrics?.count) {
-          window.Sentry.metrics.count(name, 1, { attributes });
-        }
-        if (window.Sentry?.logger?.info) {
-          window.Sentry.logger.info(name, attributes);
-        }
-      } catch {
-        /* ignore */
-      }
+<script>
+  const container = document.getElementById('carousel-container');
+  if (container) {
+    let started = false;
+    const start = async () => {
+      if (started) return;
+      started = true;
+      const { initCarousel } = await import('../scripts/carousel');
+      initCarousel(container);
     };
 
-    const getImages = (item) => {
-      if (Array.isArray(item.images) && item.images.length > 0) return item.images;
-      return item.image ? [item.image] : [];
-    };
+    container.addEventListener('pointerenter', () => void start(), { once: true, passive: true });
+    container.addEventListener('focusin', () => void start(), { once: true, passive: true });
 
-    const openLightbox = (projectIndex, imageIndex = 0) => {
-      if (!data || data.length === 0) return;
-      lightboxProjectIndex = (projectIndex + data.length) % data.length;
-      const item = data[lightboxProjectIndex];
-      const images = getImages(item);
-      if (images.length === 0) return;
-      lightboxImageIndex = (imageIndex + images.length) % images.length;
-
-      lightboxImage.src = images[lightboxImageIndex];
-      lightboxImage.alt = `${item.title} screenshot ${lightboxImageIndex + 1}`;
-      if (lightboxTitle) lightboxTitle.textContent = item.title;
-      if (lightboxCaption) lightboxCaption.textContent = `${lightboxImageIndex + 1} of ${images.length} - ${item.description || ''}`;
-
-      const multi = images.length > 1;
-      if (lightboxPrev) lightboxPrev.style.visibility = multi ? 'visible' : 'hidden';
-      if (lightboxNext) lightboxNext.style.visibility = multi ? 'visible' : 'hidden';
-
-      lightbox.classList.remove('hidden');
-      lightbox.classList.add('flex');
-      lightbox.setAttribute('aria-hidden', 'false');
-      lightboxOpen = true;
-      document.body.style.overflow = 'hidden';
-      lightboxClose?.focus();
-
-      track('carousel.lightbox.open', { id: item.id || String(lightboxProjectIndex), image: lightboxImageIndex + 1 });
-    };
-
-    const closeLightbox = () => {
-      if (!lightboxOpen) return;
-      lightbox.classList.add('hidden');
-      lightbox.classList.remove('flex');
-      lightbox.setAttribute('aria-hidden', 'true');
-      lightboxOpen = false;
-      document.body.style.overflow = '';
-      lightboxImage.removeAttribute('src');
-      track('carousel.lightbox.close', {});
-    };
-
-    const stepLightbox = (delta) => {
-      if (!data) return;
-      const images = getImages(data[lightboxProjectIndex]);
-      if (images.length <= 1) return;
-      openLightbox(lightboxProjectIndex, lightboxImageIndex + delta);
-    };
-
-    const changeProjectImage = (projectIndex, delta) => {
-      const item = data?.[projectIndex];
-      const images = item ? getImages(item) : [];
-      if (images.length <= 1) return;
-
-      const slide = slidesContainer.querySelector(`.carousel-slide[data-index="${projectIndex}"]`);
-      if (!slide) return;
-      const image = slide.querySelector('.carousel-image');
-      const imageButton = slide.querySelector('.carousel-image-btn');
-      const counter = slide.querySelector('.carousel-image-counter');
-      const current = parseInt(imageButton?.getAttribute('data-image-index') || '0', 10);
-      const next = (current + delta + images.length) % images.length;
-
-      if (image) {
-        image.src = images[next];
-        image.alt = `${item.title} screenshot ${next + 1}`;
-      }
-      imageButton?.setAttribute('data-image-index', String(next));
-      if (counter) counter.textContent = `${next + 1} / ${images.length}`;
-    };
-
-    const initCarousel = (carouselItems) => {
-      if (!carouselItems || carouselItems.length === 0) return;
-
-      const isSingle = carouselItems.length === 1;
-
-      if (isSingle) {
-        if (prevBtn) prevBtn.style.display = 'none';
-        if (nextBtn) nextBtn.style.display = 'none';
-        if (dotsContainer) dotsContainer.style.display = 'none';
-      } else {
-        if (prevBtn) prevBtn.style.display = 'block';
-        if (nextBtn) nextBtn.style.display = 'block';
-        if (dotsContainer) dotsContainer.style.display = 'flex';
-      }
-
-      slidesContainer.innerHTML = carouselItems.map((item, index) => {
-        const images = getImages(item);
-        const image = images[0] || '';
-        const hasMultipleImages = images.length > 1;
-        const hasLink = item.link && item.link.trim() !== '';
-        const linkHtml = hasLink
-          ? `<a href="${item.link}" target="_blank" rel="noopener noreferrer" class="carousel-link inline-block px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-bold font-mono text-xs rounded transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400">View Repository</a>`
-          : `<span class="carousel-link inline-block px-4 py-2 bg-zinc-900 text-zinc-600 font-mono text-xs rounded opacity-50 cursor-not-allowed border border-zinc-800">No Link Available</span>`;
-
-        return `
-          <div class="carousel-slide ${index === currentIndex ? 'active' : 'hidden'} flex flex-col md:flex-row gap-6 items-center w-full" data-index="${index}">
-            <div class="w-full md:w-1/2 flex flex-col justify-center">
-              <button
-                type="button"
-                class="carousel-image-btn group relative max-w-full rounded border border-zinc-800 bg-zinc-950 p-0 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                data-project-index="${index}"
-                data-image-index="0"
-                aria-label="Open screenshot: ${item.title}"
-              >
-                <img
-                  class="carousel-image max-h-56 w-full rounded object-cover transition group-hover:opacity-90"
-                  src="${image}"
-                  alt="${item.title} screenshot 1"
-                  width="600"
-                  height="400"
-                  decoding="async"
-                  fetchpriority="${index === 0 ? 'high' : 'auto'}"
-                  loading="${index === 0 ? 'eager' : 'lazy'}"
-                  onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22200%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%2318181b%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23ff3333%22 font-family=%22monospace%22 font-size=%2214%22>Image Load Failure</text></svg>'"
-                />
-                <span class="pointer-events-none absolute inset-x-0 bottom-0 bg-zinc-950/80 py-1 text-center font-mono text-[10px] text-emerald-400 opacity-0 transition group-hover:opacity-100">
-                  Click to expand
-                </span>
-              </button>
-              <div class="carousel-image-controls mt-3 flex items-center justify-center gap-3 ${hasMultipleImages ? '' : 'hidden'}" aria-label="${item.title} screenshots">
-                <button type="button" class="carousel-image-prev rounded border border-zinc-800 bg-zinc-900 px-2 py-1 font-mono text-xs text-zinc-400 hover:text-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500" data-project-index="${index}" aria-label="Previous ${item.title} screenshot">&lt; Prev image</button>
-                <span class="carousel-image-counter font-mono text-xs text-zinc-500" aria-live="polite">1 / ${images.length}</span>
-                <button type="button" class="carousel-image-next rounded border border-zinc-800 bg-zinc-900 px-2 py-1 font-mono text-xs text-zinc-400 hover:text-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500" data-project-index="${index}" aria-label="Next ${item.title} screenshot">Next image &gt;</button>
-              </div>
-            </div>
-            <div class="w-full md:w-1/2 flex flex-col gap-4">
-              <h3 class="carousel-title text-xl font-bold text-zinc-100 font-mono tracking-wide">${item.title}</h3>
-              <p class="carousel-description text-sm text-zinc-400 leading-relaxed">${item.description}</p>
-              <div class="pt-2">
-                ${linkHtml}
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('\n');
-
-      // Open lightbox when a screenshot is clicked
-      slidesContainer.querySelectorAll('.carousel-image-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const projectIndex = parseInt(btn.getAttribute('data-project-index') || '0', 10);
-          const imageIndex = parseInt(btn.getAttribute('data-image-index') || '0', 10);
-          openLightbox(projectIndex, imageIndex);
-        });
-      });
-
-      slidesContainer.querySelectorAll('.carousel-image-prev, .carousel-image-next').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const projectIndex = parseInt(btn.getAttribute('data-project-index') || '0', 10);
-          changeProjectImage(projectIndex, btn.classList.contains('carousel-image-next') ? 1 : -1);
-        });
-      });
-
-      if (dotsContainer && !isSingle) {
-        dotsContainer.innerHTML = carouselItems.map((_, index) => `
-          <button type="button" class="carousel-dot w-3 h-3 rounded-full border border-zinc-700 bg-zinc-900 transition-colors focus:outline-none focus:ring-1 focus:ring-emerald-500 ${index === currentIndex ? 'active bg-emerald-400 border-emerald-400' : ''}"
-                  data-carousel-dot="${index}"
-                  aria-label="Go to slide ${index + 1}"></button>
-        `).join('\n');
-
-        const dots = dotsContainer.querySelectorAll('.carousel-dot');
-        dots.forEach((dot) => {
-          dot.addEventListener('click', () => {
-            const idx = parseInt(dot.getAttribute('data-carousel-dot') || '0', 10);
-            goToSlide(idx, carouselItems);
-          });
-        });
-      }
-    };
-
-    const goToSlide = (index, carouselItems) => {
-      const slides = slidesContainer.querySelectorAll('.carousel-slide');
-      const dots = dotsContainer ? dotsContainer.querySelectorAll('.carousel-dot') : [];
-
-      slides.forEach((slide) => {
-        slide.classList.remove('active');
-        slide.classList.add('hidden');
-      });
-      dots.forEach((dot) => {
-        dot.classList.remove('active', 'bg-emerald-400', 'border-emerald-400');
-      });
-
-      currentIndex = (index + carouselItems.length) % carouselItems.length;
-
-      const newActiveSlide = slidesContainer.querySelector(`.carousel-slide[data-index="${currentIndex}"]`);
-      if (newActiveSlide) {
-        newActiveSlide.classList.remove('hidden');
-        newActiveSlide.classList.add('active');
-      }
-
-      if (dots[currentIndex]) {
-        dots[currentIndex].classList.add('active', 'bg-emerald-400', 'border-emerald-400');
-      }
-    };
-
-    // Keyboard navigation (carousel + lightbox)
-    container.addEventListener('keydown', (e) => {
-      if (lightboxOpen || !data || data.length <= 1) return;
-      if (e.key === 'ArrowRight') {
-        goToSlide(currentIndex + 1, data);
-        e.preventDefault();
-      } else if (e.key === 'ArrowLeft') {
-        goToSlide(currentIndex - 1, data);
-        e.preventDefault();
-      }
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (!lightboxOpen) return;
-      if (e.key === 'Escape') {
-        closeLightbox();
-        e.preventDefault();
-      } else if (e.key === 'ArrowRight') {
-        stepLightbox(1);
-        e.preventDefault();
-      } else if (e.key === 'ArrowLeft') {
-        stepLightbox(-1);
-        e.preventDefault();
-      }
-    });
-
-    // Touch swipe
-    let touchStartX = 0;
-    let touchEndX = 0;
-
-    container.addEventListener('touchstart', (e) => {
-      touchStartX = e.changedTouches[0].screenX;
-    }, { passive: true });
-
-    container.addEventListener('touchend', (e) => {
-      touchEndX = e.changedTouches[0].screenX;
-      if (!data || data.length <= 1) return;
-      const swipeThreshold = 50;
-      if (touchStartX - touchEndX > swipeThreshold) {
-        goToSlide(currentIndex + 1, data);
-      } else if (touchEndX - touchStartX > swipeThreshold) {
-        goToSlide(currentIndex - 1, data);
-      }
-    }, { passive: true });
-
-    if (prevBtn) {
-      prevBtn.addEventListener('click', () => {
-        if (data) goToSlide(currentIndex - 1, data);
-      });
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        observer.disconnect();
+        void start();
+      }, { rootMargin: '600px 0px' });
+      observer.observe(container);
+    } else {
+      void start();
     }
-    if (nextBtn) {
-      nextBtn.addEventListener('click', () => {
-        if (data) goToSlide(currentIndex + 1, data);
-      });
-    }
-
-    lightboxBackdrop?.addEventListener('click', closeLightbox);
-    lightboxClose?.addEventListener('click', closeLightbox);
-    lightboxPrev?.addEventListener('click', () => stepLightbox(-1));
-    lightboxNext?.addEventListener('click', () => stepLightbox(1));
-
-    // Prefer test override (window.carouselData); otherwise use build-time JSON
-    data = window.carouselData || staticData;
-    initCarousel(data);
-  });
+  }
 </script>

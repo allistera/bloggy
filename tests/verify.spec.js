@@ -73,7 +73,7 @@ test.describe('Milestone 1: Astro Project Initialization & Setup Verification', 
     await page.goto('/');
     const projectsList = page.locator('#projects-list');
     await expect(projectsList).toHaveAttribute('hx-get', '/api/projects/');
-    await expect(projectsList).toHaveAttribute('hx-trigger', 'load');
+    await expect(projectsList).toHaveAttribute('hx-trigger', 'revealed');
   });
 
   test('TC-F2-02: API Projects Endpoint Direct Access', async ({ request }) => {
@@ -90,6 +90,7 @@ test.describe('Milestone 1: Astro Project Initialization & Setup Verification', 
 
   test('TC-F2-03 & TC-F2-04: Dynamic Card Swapping and Details', async ({ page }) => {
     await page.goto('/');
+    await page.locator('#projects-list').scrollIntoViewIfNeeded();
     
     // Wait for the project cards to be loaded via HTMX
     const firstCard = page.locator('#projects-list .project-card').first();
