@@ -18,16 +18,16 @@
     "test:unit": "vitest run"
   },
   "dependencies": {
-    "@astrojs/mdx": "^7.0.7",
+    "@astrojs/mdx": "^7.0.8",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
-    "@astrojs/vercel": "^11.0.7",
-    "@sentry/astro": "^10.70.0",
+    "@astrojs/vercel": "^11.0.8",
+    "@sentry/astro": "^10.71.0",
     "@tailwindcss/vite": "^4.3.3",
-    "astro": "^7.2.4",
+    "astro": "^7.2.6",
     "astro-seo": "^1.1.0",
     "htmx.org": "^2.0.10",
-    "js-yaml": "^5.3.0",
+    "js-yaml": "^5.4.0",
     "shiki": "^4.4.3",
     "tailwindcss": "^4.3.3",
     "zod": "^4.4.3"
