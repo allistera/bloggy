@@ -1,5 +1,14 @@
 import astro from 'eslint-plugin-astro';
-import tsParser from '@typescript-eslint/parser';
+import babelParser from '@babel/eslint-parser';
+
+const typescriptParserOptions = {
+  requireConfigFile: false,
+  babelOptions: {
+    parserOpts: {
+      plugins: ['typescript', 'jsx'],
+    },
+  },
+};
 
 export default [
   {
@@ -10,14 +19,16 @@ export default [
     files: ['**/*.astro'],
     languageOptions: {
       parserOptions: {
-        parser: '@typescript-eslint/parser',
+        parser: '@babel/eslint-parser',
+        ...typescriptParserOptions,
       },
     },
   },
   {
     files: ['**/*.{ts,mjs,js}'],
     languageOptions: {
-      parser: tsParser,
+      parser: babelParser,
+      parserOptions: typescriptParserOptions,
     },
   },
 ];
