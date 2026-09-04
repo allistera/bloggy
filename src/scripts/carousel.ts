@@ -2,10 +2,12 @@ interface CarouselItem {
   id?: string;
   title: string;
   description: string;
-  images: string[];
+  images: readonly string[];
   image?: string;
   link?: string;
 }
+
+type CarouselTelemetry = Pick<typeof import('@sentry/astro'), 'logger' | 'metrics'>;
 
 const placeholder = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200"><rect width="100%" height="100%" fill="%2318181b"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23ff3333" font-family="monospace" font-size="14">Image Load Failure</text></svg>';
 
@@ -67,9 +69,9 @@ export const initCarousel = (container: HTMLElement) => {
   const getImages = (item: CarouselItem) => item.images?.length ? item.images : item.image ? [item.image] : [];
   const track = (name: string, attributes: Record<string, string | number>) => {
     try {
-      const sentry = (window as typeof window & { Sentry?: any }).Sentry;
-      sentry?.metrics?.count?.(name, 1, { attributes });
-      sentry?.logger?.info?.(name, attributes);
+      const sentry = (window as typeof window & { Sentry?: CarouselTelemetry }).Sentry;
+      sentry?.metrics.count(name, 1, { attributes });
+      sentry?.logger.info(name, attributes);
     } catch {
       // Telemetry must never break carousel controls.
     }
@@ -133,10 +135,13 @@ export const initCarousel = (container: HTMLElement) => {
   const openLightbox = (projectIndex: number, imageIndex = 0) => {
     lightboxProjectIndex = (projectIndex + data.length) % data.length;
     const item = data[lightboxProjectIndex];
+    if (!item) return;
     const images = getImages(item);
     if (images.length === 0) return;
     lightboxImageIndex = (imageIndex + images.length) % images.length;
-    lightboxImage.src = images[lightboxImageIndex];
+    const image = images[lightboxImageIndex];
+    if (!image) return;
+    lightboxImage.src = image;
     lightboxImage.alt = `${item.title} screenshot ${lightboxImageIndex + 1}`;
     if (lightboxTitle) lightboxTitle.textContent = item.title;
     if (lightboxCaption) lightboxCaption.textContent = `${lightboxImageIndex + 1} of ${images.length} - ${item.description || ''}`;
@@ -163,12 +168,15 @@ export const initCarousel = (container: HTMLElement) => {
   };
 
   const stepLightbox = (delta: number) => {
-    const images = getImages(data[lightboxProjectIndex]);
+    const item = data[lightboxProjectIndex];
+    if (!item) return;
+    const images = getImages(item);
     if (images.length > 1) openLightbox(lightboxProjectIndex, lightboxImageIndex + delta);
   };
 
   const changeProjectImage = (projectIndex: number, delta: number) => {
     const item = data[projectIndex];
+    if (!item) return;
     const images = getImages(item);
     if (images.length <= 1) return;
     const slide = slidesContainer.querySelector<HTMLElement>(`.carousel-slide[data-index="${projectIndex}"]`);
@@ -178,7 +186,9 @@ export const initCarousel = (container: HTMLElement) => {
     if (!imageElement || !imageButton) return;
     const current = Number.parseInt(imageButton.dataset.imageIndex || '0', 10);
     const next = (current + delta + images.length) % images.length;
-    setResponsiveSource(imageElement, images[next]);
+    const image = images[next];
+    if (!image) return;
+    setResponsiveSource(imageElement, image);
     imageElement.alt = `${item.title} screenshot ${next + 1}`;
     imageButton.dataset.imageIndex = String(next);
     if (counter) counter.textContent = `${next + 1} / ${images.length}`;
@@ -222,10 +232,14 @@ export const initCarousel = (container: HTMLElement) => {
 
   let touchStartX = 0;
   container.addEventListener('touchstart', (event) => {
-    touchStartX = event.changedTouches[0].screenX;
+    const touch = event.changedTouches.item(0);
+    if (!touch) return;
+    touchStartX = touch.screenX;
   }, { passive: true });
   container.addEventListener('touchend', (event) => {
-    const delta = touchStartX - event.changedTouches[0].screenX;
+    const touch = event.changedTouches.item(0);
+    if (!touch) return;
+    const delta = touchStartX - touch.screenX;
     if (Math.abs(delta) > 50 && data.length > 1) goToSlide(currentIndex + (delta > 0 ? 1 : -1));
   }, { passive: true });
 
