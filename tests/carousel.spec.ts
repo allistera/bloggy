@@ -38,7 +38,7 @@ test.describe('Feature 3: Interactive Screenshot Carousel (R3) - Tier 1 & Tier 2
 
     // Also support inline window configuration
     await page.addInitScript((data) => {
-      (window as any).carouselData = data;
+      (window as Window & { carouselData?: typeof data }).carouselData = data;
     }, mockCarouselData);
 
     await page.goto('/');
@@ -84,8 +84,7 @@ test.describe('Feature 3: Interactive Screenshot Carousel (R3) - Tier 1 & Tier 2
 
     const activeSlide = container.locator('.carousel-slide.active');
     await expect(activeSlide).toBeVisible();
-    const lastIndex = mockCarouselData.length - 1;
-    await expect(activeSlide.locator('.carousel-title')).toHaveText(mockCarouselData[lastIndex].title);
+    await expect(activeSlide.locator('.carousel-title')).toHaveText('AIOps Engine Logs');
   });
 
   // TC-F3-04: Indicator Dots Navigation
@@ -126,7 +125,7 @@ test.describe('Feature 3: Interactive Screenshot Carousel (R3) - Tier 1 & Tier 2
       });
     });
     await singlePage.addInitScript((data) => {
-      (window as any).carouselData = data;
+      (window as Window & { carouselData?: typeof data }).carouselData = data;
     }, singleCarouselItem);
 
     await singlePage.goto('/');
@@ -161,7 +160,7 @@ test.describe('Feature 3: Interactive Screenshot Carousel (R3) - Tier 1 & Tier 2
       });
     });
     await brokenPage.addInitScript((data) => {
-      (window as any).carouselData = data;
+      (window as Window & { carouselData?: typeof data }).carouselData = data;
     }, brokenImageCarousel);
 
     // Also route non-existent image to return 404
@@ -240,7 +239,7 @@ test.describe('Feature 3: Interactive Screenshot Carousel (R3) - Tier 1 & Tier 2
       });
     });
     await missingLinkPage.addInitScript((data) => {
-      (window as any).carouselData = data;
+      (window as Window & { carouselData?: typeof data }).carouselData = data;
     }, missingLinkCarousel);
 
     await missingLinkPage.goto('/');
@@ -304,6 +303,23 @@ test.describe('Feature 3: Interactive Screenshot Carousel (R3) - Tier 1 & Tier 2
 
     await page.locator('#carousel-lightbox-next').click();
     await expect(page.locator('#carousel-lightbox-image')).toHaveAttribute('src', mockCarouselData[0].images[0]);
+  });
+
+  test('TC-F3-13: Malformed carousel indexes do not crash controls', async ({ page }) => {
+    const pageErrors: string[] = [];
+    page.on('pageerror', error => pageErrors.push(error.message));
+
+    const container = page.locator('#carousel-container');
+    const imageButton = container.locator('.carousel-slide.active .carousel-image-btn');
+    await imageButton.evaluate(button => {
+      button.dataset.projectIndex = 'not-a-number';
+    });
+    await imageButton.click();
+
+    await expect(page.locator('#carousel-lightbox')).toBeHidden();
+    await container.locator('#carousel-next').click();
+    await expect(container.locator('.carousel-slide.active .carousel-title')).toHaveText(mockCarouselData[1].title);
+    expect(pageErrors).toEqual([]);
   });
 
 });

@@ -54,12 +54,20 @@ Config files: `sentry.client.config.ts`, `sentry.server.config.ts`, and the `sen
 - Node runtime metrics on the server (`nodeRuntimeMetricsIntegration`)
 - App helpers live in `src/lib/telemetry.ts`
 
-## Test
+## Quality checks
 
 ```bash
+npm run lint
+npm run typecheck
+npm run test:unit
+npm run build
 npx playwright install
 npm test
 ```
+
+`npm run typecheck` uses the native TypeScript 7 compiler. Astro and MDX
+template checking still requires upstream support for the TypeScript 7 compiler
+API; the current check covers the repository's TypeScript and JavaScript files.
 
 ## Architecture
 This project is built using Astro, Tailwind CSS, and HTMX. It follows a clean, component-based, static-first architecture, leveraging Astro's content collections for blogging and dynamic client-side interactivity using HTMX.

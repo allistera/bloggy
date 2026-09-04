@@ -9,12 +9,12 @@ export interface CarouselItem {
   id: string;
   title: string;
   description: string;
-  images: string[];
+  images: readonly string[];
   link?: string;
 }
 
 /** Mirrors a subset of live /api/projects cards for HTMX mock tests. */
-export const mockProjects: Project[] = [
+export const mockProjects = [
   {
     name: 'monzo-mcp',
     description:
@@ -29,9 +29,9 @@ export const mockProjects: Project[] = [
     language: 'Python',
     url: 'https://github.com/allistera/daily-news',
   },
-];
+] as const satisfies readonly Project[];
 
-export const longProjectDetails: Project[] = [
+export const longProjectDetails = [
   {
     name: 'super-cali-fragilistic-expiali-docious-extremely-long-repository-name-that-goes-on-and-on',
     description:
@@ -39,9 +39,9 @@ export const longProjectDetails: Project[] = [
     language: 'WebAssembly',
     url: 'https://github.com/allistera/long-name',
   },
-];
+] as const satisfies readonly Project[];
 
-export const mockCarouselData: CarouselItem[] = [
+export const mockCarouselData = [
   {
     id: 'chaos-mesh-dashboard',
     title: 'Chaos Mesh Control Plane',
@@ -66,9 +66,9 @@ export const mockCarouselData: CarouselItem[] = [
     images: ['/assets/screenshots/aiops-detector.png'],
     link: 'https://github.com/example/aiops-anomaly-detector',
   },
-];
+] as const satisfies readonly CarouselItem[];
 
-export const singleCarouselItem: CarouselItem[] = [
+export const singleCarouselItem = [
   {
     id: 'single-project',
     title: 'Single Project Showcase',
@@ -76,9 +76,9 @@ export const singleCarouselItem: CarouselItem[] = [
     images: ['/assets/screenshots/single.png'],
     link: 'https://github.com/example/single',
   },
-];
+] as const satisfies readonly CarouselItem[];
 
-export const brokenImageCarousel: CarouselItem[] = [
+export const brokenImageCarousel = [
   {
     id: 'broken-img-project',
     title: 'Broken Image Project',
@@ -86,16 +86,16 @@ export const brokenImageCarousel: CarouselItem[] = [
     images: ['/assets/screenshots/non-existent-image-path.png'],
     link: 'https://github.com/example/broken-img',
   },
-];
+] as const satisfies readonly CarouselItem[];
 
-export const missingLinkCarousel: CarouselItem[] = [
+export const missingLinkCarousel = [
   {
     id: 'no-link-project',
     title: 'No External Link Project',
     description: 'This project does not have a GitHub repository link provided.',
     images: ['/assets/screenshots/no-link.png'],
   },
-];
+] as const satisfies readonly CarouselItem[];
 
 /** HTML shape aligned with src/pages/api/projects.astro cards. */
 export function formatProjectAsHtml(project: Project): string {
